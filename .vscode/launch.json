@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Console Test App",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet: build",
+            // Point this directly to your Console App's x64 DLL output
+            "program": "${workspaceFolder}/StreamClientConsole/bin/x64/Debug/net8.0/StreamClientConsole.dll",
+            "cwd": "${workspaceFolder}/StreamClientConsole",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        }
+    ]
+}

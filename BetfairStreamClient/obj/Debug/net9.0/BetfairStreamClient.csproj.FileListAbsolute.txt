@@ -1,0 +1,12 @@
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.AssemblyInfoInputs.cache
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.AssemblyInfo.cs
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.csproj.CoreCompileInputs.cache
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.sourcelink.json
+C:\git\BetfairStreamClient\BetfairStreamClient\bin\Debug\net9.0\BetfairStreamClient.deps.json
+C:\git\BetfairStreamClient\BetfairStreamClient\bin\Debug\net9.0\BetfairStreamClient.dll
+C:\git\BetfairStreamClient\BetfairStreamClient\bin\Debug\net9.0\BetfairStreamClient.pdb
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.dll
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\refint\BetfairStreamClient.dll
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\BetfairStreamClient.pdb
+C:\git\BetfairStreamClient\BetfairStreamClient\obj\Debug\net9.0\ref\BetfairStreamClient.dll
