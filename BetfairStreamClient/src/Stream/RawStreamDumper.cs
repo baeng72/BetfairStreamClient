@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class RawStreamDumper : IAsyncDisposable
     {

@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class ResponseMessage 
     {
@@ -46,7 +46,7 @@ namespace StreamTest.Stream
             SegEnd
         }
         [JsonPropertyName("op")]
-        public string Op { get; set; }
+        public string Op { get; set; } = null!;
 
         [JsonPropertyName("id")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -73,7 +73,7 @@ namespace StreamTest.Stream
         /// <value>Token value (non-null) should be stored and passed in a MarketSubscriptionMessage to resume subscription (in case of disconnect)</value>        
         [JsonPropertyName("clk")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string Click { get; set; }
+        public string Click { get; set; } = null!;
 
         /// <summary>
         ///     Heartbeat Milliseconds - the heartbeat rate (may differ from requested: bounds are 500 to 30000)
@@ -97,7 +97,7 @@ namespace StreamTest.Stream
         /// <value>Token value (non-null) should be stored and passed in a MarketSubscriptionMessage to resume subscription (in case of disconnect)</value>        
         [JsonPropertyName("initialClk")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string InitialClk { get; set; }
+        public string InitialClk { get; set; } = null!;
 
         /// <summary>
         ///     Conflate Milliseconds - the conflation rate (may differ from that requested if subscription is delayed)

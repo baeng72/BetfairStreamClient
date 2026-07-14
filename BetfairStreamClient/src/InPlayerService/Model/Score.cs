@@ -5,14 +5,16 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.InPlayerService.Model
+namespace BetfairStreamClient.InPlayerService.Model
 {
     public partial class Score
+    
     {
+        
         [JsonPropertyName("home")]
-        public HomeAway Home { get; set; }
+        public HomeAway Home { get; set; } = null!;
 
         [JsonPropertyName("away")]
-        public HomeAway Away { get; set; }
+        public HomeAway Away { get; set; } = null!;
     }
 }

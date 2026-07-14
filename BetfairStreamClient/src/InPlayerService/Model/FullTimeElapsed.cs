@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.InPlayerService.Model
+namespace BetfairStreamClient.InPlayerService.Model
 {
     public class FullTimeElapsed
     {

@@ -5,12 +5,12 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     public sealed class PriceProjection
     {
         [JsonPropertyName("priceData")]
-        public List<PriceData> PriceData { get; set; }
+        public List<PriceData> PriceData { get; set; } = null!;
 
         [JsonPropertyName("virtualise")]
         public bool? Virtualise { get; set; }

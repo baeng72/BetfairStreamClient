@@ -5,10 +5,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.InPlayerService.Model
+namespace BetfairStreamClient.InPlayerService.Model
 {
     public class EventScore
     {
+        
         [JsonPropertyName("eventTypeId")]
         public int EventTypeId { get; set; }
 
@@ -16,7 +17,7 @@ namespace StreamTest.InPlayerService.Model
         public int  EventId { get; set; }
 
         [JsonPropertyName("score")]
-        public Score score { get; set; }
+        public Score score { get; set; } = null!;
 
         [JsonPropertyName("currentSet")]
         public int CurrentSet { get; set; }
@@ -25,6 +26,6 @@ namespace StreamTest.InPlayerService.Model
         public int CurrentGame { get; set; }
 
         [JsonPropertyName("fullTimeElapsed")]
-        public FullTimeElapsed FullTimeElapsed { get; set; }
+        public FullTimeElapsed FullTimeElapsed { get; set; } = null!;
     }
 }

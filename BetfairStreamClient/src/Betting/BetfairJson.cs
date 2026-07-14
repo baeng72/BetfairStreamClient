@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     internal static class BetfairJson
     {

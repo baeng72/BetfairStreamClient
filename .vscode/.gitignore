@@ -1,0 +1,5 @@
+.vscode
+StreamClientConsole/bin
+StreamClientConsole/obj
+
+*.json

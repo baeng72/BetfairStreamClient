@@ -1,13 +1,13 @@
 ﻿using System.Text.Json.Serialization;
 
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class MarketChange
     {
         [JsonPropertyName("rc")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<RunnerChange> RunnerChanges { get; set; }
+        public List<RunnerChange> RunnerChanges { get; set; } = null!;
 
         [JsonPropertyName("img")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -23,10 +23,10 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("marketDefinition")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public MarketDefinition MarketDefinition { get; set; }
+        public MarketDefinition MarketDefinition { get; set; } = null!;
 
         [JsonPropertyName("id")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string MarketId { get; set; }
+        public string MarketId { get; set; } = null!;
     }
 }

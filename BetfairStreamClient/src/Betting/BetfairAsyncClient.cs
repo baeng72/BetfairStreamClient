@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     public sealed class BetfairAsyncClient : IAsyncDisposable
     {

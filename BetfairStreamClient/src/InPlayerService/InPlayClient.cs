@@ -1,5 +1,5 @@
-﻿using StreamTest.InPlayerService.Model;
-using StreamTest.Stream;
+﻿using BetfairStreamClient.InPlayerService.Model;
+using BetfairStreamClient.Stream;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -11,7 +11,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace StreamTest.InPlayerService
+namespace BetfairStreamClient.InPlayerService
 {
     public class InPlayClient
     {
@@ -33,8 +33,10 @@ namespace StreamTest.InPlayerService
             _client = client;            
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _logger = logger;
-
+            
         }
+
+        
 
         public void AddEventId(string eventId)
         {
@@ -65,8 +67,7 @@ namespace StreamTest.InPlayerService
 
         public async Task MonitorMatchScoreAsync(CancellationToken cancellationToken)
         {
-            int previousSelectionGrames = -1;
-            bool isSelectionService = false;
+            
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -87,16 +88,17 @@ namespace StreamTest.InPlayerService
                         req += "&locale=en_GB";
                         string url = $"{IpsBaseUrl}{GET_SCORES}?{req}";
                         var response = await _client.GetStringAsync(url);
-                        if (response != null)
+                        if (response != null){
                             _logger.Log($"[INPLAY] response: {response}");
-                        using (JsonDocument doc = JsonDocument.Parse(response))
-                        {
-                            JsonElement root = doc.RootElement;
-                            List<EventScore> scores = JsonSerializer.Deserialize<List<EventScore>>(root);
-                            EventScoreHandler(this, scores);
-                            
+                            using (JsonDocument doc = JsonDocument.Parse(response))
+                            {
+                                JsonElement root = doc.RootElement;
+                                List<EventScore>? scores = JsonSerializer.Deserialize<List<EventScore>>(root);
+                                if(scores != null)
+                                EventScoreHandler(this, scores);
+                                
+                            }
                         }
-
                     }
 
 

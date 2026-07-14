@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class Order
     {
@@ -130,7 +130,7 @@ namespace StreamTest.Stream
         /// <value>Regulator Code - the regulator of the order</value>        
         [JsonPropertyName("rc")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string RegulatorCode { get; set; }
+        public string RegulatorCode { get; set; } = null!;
 
         /// <summary>
         ///     Size - the original placed size of the order
@@ -154,7 +154,7 @@ namespace StreamTest.Stream
         /// <value>Regulator Auth Code - the auth code returned by the regulator</value>        
         [JsonPropertyName("rac")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string RegulatorAuthCode { get; set; }
+        public string RegulatorAuthCode { get; set; } = null!;
 
         /// <summary>
         ///     Matched Date - the date the order was matched (null if the order is not matched)
@@ -195,7 +195,7 @@ namespace StreamTest.Stream
         /// <value>Bet Id - the id of the order</value>        
         [JsonPropertyName("id")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string BetId { get; set; }
+        public string BetId { get; set; } = null!;
 
 
         /// <summary>
@@ -229,12 +229,12 @@ namespace StreamTest.Stream
         
         [JsonPropertyName("rfo")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string ReferenceOrder { get; set; }
+        public string ReferenceOrder { get; set; } = null!;
 
         
         [JsonPropertyName("rfs")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string ReferenceStrategy { get; set; }
+        public string ReferenceStrategy { get; set; } = null!;
 
 
     }

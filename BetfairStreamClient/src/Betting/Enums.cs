@@ -1,7 +1,7 @@
 ﻿
 using System.Text.Json.Serialization;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum Side

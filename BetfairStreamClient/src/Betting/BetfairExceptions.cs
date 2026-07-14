@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
 
     /// <summary>Base class for all errors raised by this client.</summary>

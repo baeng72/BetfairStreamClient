@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class OrderMarketChange
     {
@@ -20,7 +20,7 @@ namespace StreamTest.Stream
         
         [JsonPropertyName("orc")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<OrderRunnerChange> OrderRunnerChanges { get; set; }
+        public List<OrderRunnerChange> OrderRunnerChanges { get; set; } = null!;
 
         /// <summary>
         ///     Gets or Sets Closed
@@ -36,7 +36,7 @@ namespace StreamTest.Stream
         /// <value>Market Id - the id of the market the order is on</value>        
         [JsonPropertyName("id")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string MarketId { get; set; }
+        public string MarketId { get; set; } = null!;
 
         /// <summary>
         ///     Gets or Sets FullImage

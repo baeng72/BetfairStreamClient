@@ -1,7 +1,7 @@
 ﻿using System.Net.NetworkInformation;
 using System.Text.Json.Serialization;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     public sealed class PlaceInstruction
     {

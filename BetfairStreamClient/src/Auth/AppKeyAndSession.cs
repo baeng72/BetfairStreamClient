@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BFBot.Auth
+namespace BetfairStreamClient.Auth
 {
     /// <summary>
     /// Wraps an appkey & it's current session

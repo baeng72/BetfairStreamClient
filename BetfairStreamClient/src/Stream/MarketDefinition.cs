@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class MarketDefinition
     {
@@ -58,7 +58,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("venue")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string Venue { get; set; }
+        public string Venue { get; set; } = null!;
 
         [JsonPropertyName("settledTime")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -66,7 +66,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("timezone")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string Timezone { get; set; }
+        public string Timezone { get; set; } = null!;
 
         [JsonPropertyName("eachWayDivisor")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -74,11 +74,11 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("regulators")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<string> Regulators { get; set; }
+        public List<string> Regulators { get; set; } = null!;
 
         [JsonPropertyName("marketType")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string MarketType { get; set; }
+        public string MarketType { get; set; } = null!;
 
         [JsonPropertyName("marketBaseRate")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -90,7 +90,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("countryCode")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string CountryCode { get; set; }
+        public string CountryCode { get; set; } = null!;
 
         [JsonPropertyName("inPlay")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -110,7 +110,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("eventId")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string EventId { get; set; }
+        public string EventId { get; set; } = null!;
 
         [JsonPropertyName("crossMatching")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -140,7 +140,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("runners")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<RunnerDefinition> Runners { get; set; }
+        public List<RunnerDefinition> Runners { get; set; } = null!;
 
         [JsonPropertyName("version")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -148,7 +148,7 @@ namespace StreamTest.Stream
 
         [JsonPropertyName("eventTypeId")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string EventTypeId { get; set; }
+        public string EventTypeId { get; set; } = null!;
 
         [JsonPropertyName("complete")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class MarketDataFilter
     {
@@ -54,6 +54,6 @@ namespace StreamTest.Stream
         /// </summary>        
         [JsonPropertyName("fields")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<FieldsEnum?> Fields { get; set; }
+        public List<FieldsEnum?> Fields { get; set; } = null!;
     }
 }

@@ -1,4 +1,4 @@
-﻿using BFBot.Betting;
+﻿using BetfairStreamClient.Betting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class MarketSubscription : RequestMessage
     {
@@ -16,7 +16,7 @@ namespace StreamTest.Stream
         /// </summary>        
         [JsonPropertyName("marketFilter")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public MarketFilter MarketFilter { get; set; }
+        public MarketFilter MarketFilter { get; set; }=null!;
 
    
         /// <summary>
@@ -25,6 +25,6 @@ namespace StreamTest.Stream
         [DataMember(Name = "marketDataFilter", EmitDefaultValue = false)]
         [JsonPropertyName("marketDataFilter")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public MarketDataFilter MarketDataFilter { get; set; }
+        public MarketDataFilter MarketDataFilter { get; set; } = null!;
     }
 }

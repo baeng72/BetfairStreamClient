@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     public sealed class MarketBook
     {

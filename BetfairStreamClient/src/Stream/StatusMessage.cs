@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class StatusMessage : RequestMessage
     {
@@ -83,10 +83,10 @@ namespace StreamTest.Stream
         public StatusCodeEnum? StatusCode { get; set; }
 
         [JsonPropertyName("errorMessage")]        
-        public string ErrorMessage { get; set; }
+        public string ErrorMessage { get; set; } = null!;
 
         [JsonPropertyName("connectionId")]
-        public string ConnectionId {  get; set; }
+        public string ConnectionId {  get; set; } = null!;
 
         [JsonPropertyName("connectionClosed")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -1,16 +1,16 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class OrderFilter
     {
         [JsonPropertyName("accountIds")]
-        public List<long?> AccountIds { get; set; }
+        public List<long?> AccountIds { get; set; } = null!;
 
         [JsonPropertyName("includeOveralPosition")]
         public bool IncludeOverallPosition { get; set; }
 
         [JsonPropertyName("customerStrategyRefs")]
-        public List<string> CustomerStrategyRefs { get; set; }
+        public List<string> CustomerStrategyRefs { get; set; } = null!;
     }
 }

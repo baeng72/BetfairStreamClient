@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class OrderRunnerChange
     {
@@ -13,7 +13,7 @@ namespace StreamTest.Stream
         
         [JsonPropertyName("mb")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> MatchedBacks { get; set; }
+        public List<List<double?>> MatchedBacks { get; set; } = null!;
 
         /// <summary>
         ///     Unmatched Orders - orders on this runner (selection) that are not fully matched
@@ -22,7 +22,7 @@ namespace StreamTest.Stream
         
         [JsonPropertyName("uo")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<Order> UnmatchedOrders { get; set; }
+        public List<Order> UnmatchedOrders { get; set; } = null!;
 
         /// <summary>
         ///     Selection Id - the id of the runner (selection)
@@ -53,6 +53,6 @@ namespace StreamTest.Stream
         /// <value>Matched Lays - matched amounts by distinct matched price on the Lay side for this runner (selection)</value>        
         [JsonPropertyName("ml")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> MatchedLays { get; set; }
+        public List<List<double?>> MatchedLays { get; set; } = null!;
     }
 }

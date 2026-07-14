@@ -1,13 +1,13 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class RequestMessage
     {
 
         [JsonPropertyName("op")]
-        public string Op { get; set; }
+        public string Op { get; set; } = null!;
 
         [JsonPropertyName("id")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

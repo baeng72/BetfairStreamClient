@@ -5,32 +5,33 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace StreamTest.InPlayerService.Model
+namespace BetfairStreamClient.InPlayerService.Model
 {
     public class HomeAway
     {
+        
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         [JsonPropertyName("score")]
         
-        public string Score { get; set; }
+        public string Score { get; set; } = null!;
 
         [JsonPropertyName("halfTimeScore")]
         
-        public string HalfimeScore { get; set; }
+        public string HalfTimeScore { get; set; } = null!;
 
         [JsonPropertyName("fullTimeScore")]
         
-        public string FullTimeScore { get; set; }
+        public string FullTimeScore { get; set; }   = null!;
 
         [JsonPropertyName("penaltiesScore")]
         
-        public string PenaltiesScore { get; set; }
+        public string PenaltiesScore { get; set; } = null!;
 
         [JsonPropertyName("penaltiesSequence")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public List<int> PenaltiesSequence { get; set; }
+        public List<int> PenaltiesSequence { get; set; } = null!;
 
         [JsonPropertyName("games")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
@@ -42,7 +43,7 @@ namespace StreamTest.InPlayerService.Model
 
         [JsonPropertyName("gameSequence")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public List<int> GameSequence { get; set; }
+        public List<int> GameSequence { get; set; } = null!;
 
         [JsonPropertyName("isServing")]
         public bool IsServing { get; set; }

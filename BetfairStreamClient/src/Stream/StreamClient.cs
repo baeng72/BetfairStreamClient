@@ -16,7 +16,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class StreamClient
     {
@@ -188,7 +188,7 @@ namespace StreamTest.Stream
             if (sslStream == null)
                 throw new InvalidOperationException("Client is not connected. Call RunAsync first.");
             
-            var marketFilter = new BFBot.Betting.MarketFilter
+            var marketFilter = new BetfairStreamClient.Betting.MarketFilter
             {
                 MarketIds = newMarketIds,
             };
@@ -287,25 +287,28 @@ namespace StreamTest.Stream
 
                 if(root.TryGetProperty("op", out JsonElement opElement))
                 {
-                    string op = opElement.GetString();
+                    string? op = opElement.GetString();
                     if(op == "mcm")
                     {
                         
                         var marketMessage = root.Deserialize<MarketChangeMessage>();
-                        MarketMessageReceived?.Invoke(this,marketMessage);      //pass this to strategy code to handle mcms
+                        if(marketMessage != null)
+                            MarketMessageReceived?.Invoke(this,marketMessage);      //pass this to strategy code to handle mcms
                         
                     }
                     else if (op == "ocm")
                     {
 
                         var orderMessage = root.Deserialize<OrderChangeMessage>();
-                        OrderMessageReceived?.Invoke(this,orderMessage);
+                        if(orderMessage != null)
+                            OrderMessageReceived?.Invoke(this,orderMessage);
                     }
                     else if (op == "status")
                     {
                         // Capture connection heartbeats, login verifications, or subscription errors
                         var statusMessage = root.Deserialize<StatusMessage>();
-                        ProcessStatusMessage(statusMessage);
+                        if(statusMessage != null)
+                            ProcessStatusMessage(statusMessage);
                     }
                     else if(op == "ct")
                     {

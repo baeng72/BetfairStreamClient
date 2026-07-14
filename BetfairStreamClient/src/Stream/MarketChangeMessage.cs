@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class MarketChangeMessage
     {
@@ -15,7 +15,7 @@ namespace StreamTest.Stream
         /// <value>MarketChanges - the modifications to markets (will be null on a heartbeat</value>        
         [JsonPropertyName("mc")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<MarketChange> MarketChanges { get; set; }
+        public List<MarketChange> MarketChanges { get; set; } = null!;
 
         
     }

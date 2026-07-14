@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
 
-namespace StreamTest.Stream
+namespace BetfairStreamClient.Stream
 {
     public class OrderSubscripton : RequestMessage
     {

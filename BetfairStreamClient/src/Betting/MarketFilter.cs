@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
     /// <summary>Mirrors Betfair's TimeRange type (ISO-8601 strings, e.g. "2026-07-04T00:00:00Z").</summary>
     public sealed class TimeRange

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace BFBot.Betting
+namespace BetfairStreamClient.Betting
 {
 
     public sealed class RunnerCatalog
@@ -14,7 +14,7 @@ namespace BFBot.Betting
         public long SelectionId { get; set; }
 
         [JsonPropertyName("runnerName")]
-        public string RunnerName { get; set; } = "";
+        public string RunnerName { get; set; } = null!;
 
         [JsonPropertyName("handicap")]
         public double Handicap { get; set; }

@@ -11,7 +11,7 @@ using System.Net.Http;
 using System.Text.Json.Serialization.Metadata;
 using System.Text.Json;
 
-namespace BFBot.Auth
+namespace BetfairStreamClient.Auth
 {
     [DataContract]
     public class LoginResponse
