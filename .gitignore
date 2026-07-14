@@ -1,0 +1,12 @@
+BetfairStreamClient/bin/
+BetfairStreamClient/obj/
+StreamClientConsole/bin/
+StreamClientConsole/obj/
+
+
+## User-specific / Local settings
+.vs/
+.vscode/
+appsettings.Development.json
+
+*.json
