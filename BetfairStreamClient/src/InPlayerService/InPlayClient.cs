@@ -1,5 +1,6 @@
 ﻿using BetfairStreamClient.InPlayerService.Model;
 using BetfairStreamClient.Stream;
+using BetfairStreamClient.Logging;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;

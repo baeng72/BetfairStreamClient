@@ -92,7 +92,7 @@ namespace BetfairStreamClient.Auth
             }
             catch (Exception e)
             {
-                throw new IOException("SSO Authentication - call failed:", e);
+                throw new IOException($"SSO Authentication - call failed: {e.Message}");
             }
 
             //got a response - decode

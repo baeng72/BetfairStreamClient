@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Threading.Channels;
 
-namespace BetfairStreamClient
+namespace BetfairStreamClient.Logging
 {
     public class Logger
     {

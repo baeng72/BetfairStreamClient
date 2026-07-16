@@ -12,6 +12,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
      <ProjectReference Include="..\BetfairStreamClient\BetfairStreamClient.csproj" />
+     
   </ItemGroup>
-
+<ItemGroup>
+  <!-- Forces the compiler to copy the json file to the bin output folder -->
+  <None Update="appsettings.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
 </Project>
