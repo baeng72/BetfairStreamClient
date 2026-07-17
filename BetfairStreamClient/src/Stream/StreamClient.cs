@@ -105,30 +105,24 @@ namespace BetfairStreamClient.Stream
                 _logger.Log(err);
                 throw new HttpRequestException($"Authentication failed: {ex.Message}", ex);
             }
-            //// 2. Subscribe to Orders once (This stays active for the lifetime of the socket)
-            // var orderSubscription = new OrderSubscripton
-            // {
-            //     Op = "orderSubscription",
-            //     Id = NextId(),
-            //     OrderFilter = new OrderFilter
-            //     {
-            //         CustomerStrategyRefs = new List<string>
-            //             {
-            //                 "ST-TENNIS"
-            //             }
-            //     }
+            // 2. Subscribe to Orders once (This stays active for the lifetime of the socket)
+            var orderSubscription = new OrderSubscripton
+            {
+                Op = "orderSubscription",
+                Id = NextId()
+                
 
-            // };
-            // try
-            // {
-            //     await SendJsonAsync(orderSubscription, cancellationToken);
-            // }
-            // catch (HttpRequestException ex)
-            // {
-            //     var err = $"OrderSubscription failed: {ex.Message}";
-            //     _logger.Log(err);
-            //     throw new HttpRequestException(err, ex);
-            // }
+            };
+            try
+            {
+                await SendJsonAsync(orderSubscription, cancellationToken);
+            }
+            catch (HttpRequestException ex)
+            {
+                var err = $"OrderSubscription failed: {ex.Message}";
+                _logger.Log(err);
+                throw new HttpRequestException(err, ex);
+            }
 
             
             _logger.Log($"Stream Client setup and subscribed");
@@ -192,6 +186,31 @@ namespace BetfairStreamClient.Stream
         public MarketCacheManager MarketCacheManager{get {return _marketCache;}}
         public OrderCacheManager OrderCacheManager{get {return _orderCache;}}
 
+        public async Task ChangeOrdersAsync(string strategyRef, CancellationToken cancellationToken)
+        {
+            _logger.Log("ChangeOrdersAsync");
+            if (sslStream == null)
+                throw new InvalidOperationException("Client is not connected. Call RunAsync first.");
+
+            var orderSubscription = new OrderSubscripton
+            {
+                Op = "orderSubscription",
+                Id = NextId(),
+                
+            };
+            try
+            {
+                await SendJsonAsync(orderSubscription, cancellationToken);
+            }
+            catch (HttpRequestException ex)
+            {
+                var err = $"OrderSubscription failed: {ex.Message}";
+                _logger.Log(err);
+                throw new HttpRequestException(err, ex);
+            }
+
+        }
+
         public async Task ChangeMarketsAsync(List<string> newMarketIds, CancellationToken cancellationToken)
         {
             _logger.Log("ChangeMarketsAsync");
@@ -204,7 +223,7 @@ namespace BetfairStreamClient.Stream
             };
             var marketDataFilter = new MarketDataFilter
             {
-                Fields = new List<MarketDataFilter.FieldsEnum?> { MarketDataFilter.FieldsEnum.ExBestOffersDisp, MarketDataFilter.FieldsEnum.ExTraded, MarketDataFilter.FieldsEnum.ExTradedVol, MarketDataFilter.FieldsEnum.ExMarketDef}
+                Fields = new List<MarketDataFilter.FieldsEnum?> { MarketDataFilter.FieldsEnum.ExBestOffers, MarketDataFilter.FieldsEnum.ExTraded, MarketDataFilter.FieldsEnum.ExTradedVol, MarketDataFilter.FieldsEnum.ExMarketDef}
             };
             var marketSubscription = new MarketSubscription
             {

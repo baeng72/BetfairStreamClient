@@ -14,6 +14,10 @@ namespace BetfairStreamClient.Stream
 
         public MarketRunnerCache GetOrCreateRunnerCache(string marketId, long selectionId)
         {
+            if (selectionId == 0)
+            {
+                int x = 0;
+            }
             var runnersInMarket = _marketCache.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, MarketRunnerCache>());
             return runnersInMarket.GetOrAdd(selectionId, _ => new MarketRunnerCache());
         }

@@ -9,6 +9,8 @@ public class RunnerTracker
     public double CurrentPrice { get; private set; }
     public bool AlreadyBacked { get; set; }
 
+    
+
     public DateTime ScheduledOff{get;set;} =DateTime.UtcNow;
 
     public RunnerTracker(long runnerId, int windowSeconds = 60)
