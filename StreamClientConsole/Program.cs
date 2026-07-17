@@ -5,6 +5,7 @@ using BetfairStreamClient.Stream;
 using BetfairStreamClient.Logging;
 using System.Threading.Channels;
 using StreamClientConsole;
+using System.Net.Mail;
 
 try
 {
@@ -45,13 +46,14 @@ try
     string logDir = "C:/DATA/BF/BetfairStreamClient";
     Directory.CreateDirectory(logDir);
     await using var logger = new Logger();
-    logger.Init(Path.Combine(logDir, "strategy_initial.csv"), cancellationToken);
+    logger.Init(Path.Combine(logDir, $"strategy_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.csv"), cancellationToken);
     await using var streamDumper = new RawStreamDumper();
-    streamDumper.Init(Path.Combine(logDir, "raw_string_initial.json"), cancellationToken);
+    streamDumper.Init(Path.Combine(logDir, $"raw_string_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.json"), cancellationToken);
 
     var streamClient = new StreamClient("stream-api.betfair.com", 443, session.AppKey, session.Token, logger, streamDumper);
     //var outboundOrderChannel = Channel.CreateUnbounded<OutboundCommand>();
     await streamClient.ConnectAndAuthenticateAsync(cancellationToken);
+    
     SteamerService steamerService = new SteamerService(betfairAsyncClient, streamClient, logger, cts.Token, 1);
     await steamerService.Start();
     Task streamTask = Task.Run(() => streamClient.RunLoopAsync(cancellationToken));

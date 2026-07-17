@@ -9,16 +9,16 @@ namespace BetfairStreamClient.Stream
         public double? TotalVolume { get; set; }
 
         [JsonPropertyName("batb")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> BestAvailableToBack { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] BestAvailableToBack { get; set; } = null!;
 
         [JsonPropertyName("spb")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<List<double?>> StartingPriceBack { get; set; } = null!;
 
         [JsonPropertyName("bdatl")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> BestDisplayAvailableToLay { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] BestDisplayAvailableToLay { get; set; } = null!;
 
         [JsonPropertyName("trd")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -33,8 +33,8 @@ namespace BetfairStreamClient.Stream
         public double? LastTradedPrice { get; set; }
 
         [JsonPropertyName("atb")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> AvailableToBack { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] AvailableToBack { get; set; } = null!;
 
         [JsonPropertyName("spl")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -45,12 +45,12 @@ namespace BetfairStreamClient.Stream
         public double? StartingPriceNear { get; set; }
 
         [JsonPropertyName("atl")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> AvailableToLay { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] AvailableToLay { get; set; } = null!;
 
         [JsonPropertyName("batl")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> BestAvailableToLay { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] BestAvailableToLay { get; set; } = null!;
 
         [JsonPropertyName("id")]        
         public long SelectionId { get; set; }
@@ -60,8 +60,8 @@ namespace BetfairStreamClient.Stream
         public double? Handicap { get; set; }
 
         [JsonPropertyName("bdatb")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<List<double?>> BestDisplayAvailableToBack { get; set; } = null!;
+        [JsonConverter(typeof(DeltaConverter))]
+        public LevelDelta[] BestDisplayAvailableToBack { get; set; } = null!;
 
 
     }
