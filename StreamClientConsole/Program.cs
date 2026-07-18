@@ -19,7 +19,8 @@ try
     string user = config["settings:Username"]??string.Empty;    
     string password = config["settings:Password"]??string.Empty;
     string certFile = config["settings:CertFile"]??string.Empty;
-    if(string.IsNullOrEmpty(appKey) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(certFile))
+    string logDir = config["settings:LogDir"]??string.Empty;
+    if(string.IsNullOrEmpty(appKey) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(certFile) || string.IsNullOrEmpty(logDir))
     {
         Console.WriteLine("Configuration not set.");
         return;
@@ -42,8 +43,7 @@ try
     }
     //list current horse racing markets in AU and NZ
     HttpClient _httpClient = new HttpClient();
-    var betfairAsyncClient = new BetfairAsyncClient(_httpClient, session.AppKey, session.Token);
-    string logDir = "C:/DATA/BF/BetfairStreamClient";
+    var betfairAsyncClient = new BetfairAsyncClient(_httpClient, session.AppKey, session.Token);    
     Directory.CreateDirectory(logDir);
     await using var logger = new Logger();
     logger.Init(Path.Combine(logDir, $"strategy_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.csv"), cancellationToken);
