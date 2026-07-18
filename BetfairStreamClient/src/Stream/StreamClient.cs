@@ -237,7 +237,7 @@ namespace BetfairStreamClient.Stream
 
             // Reuse the existing active TCP pipeline
             await SendJsonAsync(marketSubscription, cancellationToken);
-            _logger.Log($"[NETWORK] Dispatched subscription requests for {newMarketIds.Count} tennis markets.");
+            _logger.Log($"[NETWORK] Dispatched subscription requests for {newMarketIds.Count} markets.");
         
         }
 

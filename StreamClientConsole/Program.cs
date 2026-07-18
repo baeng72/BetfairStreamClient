@@ -53,30 +53,12 @@ try
     var streamClient = new StreamClient("stream-api.betfair.com", 443, session.AppKey, session.Token, logger, streamDumper);
     //var outboundOrderChannel = Channel.CreateUnbounded<OutboundCommand>();
     await streamClient.ConnectAndAuthenticateAsync(cancellationToken);
-    
+
     SteamerService steamerService = new SteamerService(betfairAsyncClient, streamClient, logger, cts.Token, 1);
     await steamerService.Start();
     Task streamTask = Task.Run(() => streamClient.RunLoopAsync(cancellationToken));
     await Task.WhenAll(streamTask);
-    //var rpcWriter = new BetfairRcpWriter(outboundOrderChannel.Reader, logger, betfairAsyncClient);
-    // var marketFilter = new MarketFilter
-    // {
-    //     EventTypeIds=new List<string> {"1"},
-    //     MarketCountries=new List<string>
-    //     {
-    //         "AU","NZ"
-    //     },
-    //     MarketStartTime = new TimeRange
-    //     {
-    //         From = DateTime.UtcNow,
-    //         To = DateTime.UtcNow.AddHours(3)
-    //     }
-    // };
-    // var markets = await betfairAsyncClient.ListMarketCatalogueAsync(marketFilter);
-    // if (markets != null)
-    // {
-        
-    // }
+    
 
 }
 catch(Exception ex)

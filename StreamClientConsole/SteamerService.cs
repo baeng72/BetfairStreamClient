@@ -61,21 +61,20 @@ namespace StreamClientConsole{
                     MarketStartTime = new TimeRange
                     {
                         From = DateTime.UtcNow.AddMinutes(10),
-                        To = DateTime.UtcNow.AddHours(3)
+                        To = DateTime.UtcNow.AddHours(1)
                     }
                 }, new List<MarketProjection>
                 {
                     MarketProjection.COMPETITION, MarketProjection.RUNNER_METADATA, MarketProjection.EVENT
                 });
-                List<string> marketIds =  _marketCatalogues.Select(x=>x.MarketId).Take(5).ToList();
+                List<string> marketIds =  _marketCatalogues.Select(x=>x.MarketId).ToList();
                 
-                if(marketIds.Count>0)
-                   await _streamClient.ChangeMarketsAsync(marketIds,_cancellationToken);
+                if(marketIds.Count>0){                    
+                    await _streamClient.ChangeMarketsAsync(marketIds,_cancellationToken);
+                }
                 else
                    _logger.Log($"No markets available in time period.");
-                await _streamClient.ChangeOrdersAsync("STRACE",_cancellationToken);
-                // List<string> tempMarketIds = new List<string>{"1.260095692"};
-                // await _streamClient.ChangeMarketsAsync(tempMarketIds,_cancellationToken);
+                
                 
             }
             catch(Exception ex)
@@ -98,12 +97,11 @@ namespace StreamClientConsole{
                 }
                 var trackers = _markets.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, RunnerTracker>());
                 var cat = _marketCatalogues.FirstOrDefault(x=>x.MarketId==market.MarketId);
-                string competitionName="gigi";
+                
                 string eventName = "gigi";
                 if (cat != null)
                 {
-                    if(cat.Competition!=null)
-                        competitionName = cat.Competition.Name;
+                    
                     if (cat.Event != null)
                     {
                         eventName = cat.Event.Name;
@@ -128,7 +126,7 @@ namespace StreamClientConsole{
                         bestLayPrice = bestLay.Value.Price;
                         bestLaySize = bestLay.Value.Size;
                     }
-                    if (bestBackPrice <= 1.01) continue;
+                    if (bestBackPrice <= 1.01 || bestBackPrice >= 20.0) continue;   //can't lay huge prices.
                     
                     var tracker = trackers.GetOrAdd(runnerSnap.SelectionId, id => new RunnerTracker(id));
                     if(bestLayPrice <= 1.0)
@@ -153,10 +151,7 @@ namespace StreamClientConsole{
                         
                         if (_detector.IsSteaming(tracker, score, wom, tracker.ScheduledOff))// scheduledOff))
                         {
-                            if (runnerSnap.SelectionId == 0)
-                            {
-                                int x= 0;
-                            }
+                            
                             string runnerName = runnerSnap.SelectionId.ToString();
                             if(cat!=null)
                             {
@@ -168,7 +163,9 @@ namespace StreamClientConsole{
                                         runnerName = runnerDef.RunnerName;                                    
                                     }
                                 }
+                                
                             }
+                            
 
                             _logger.Log(
                                 $"STEAM DETECTED — Market: {marketId} ({eventName}) Runner: {runnerName} " +
