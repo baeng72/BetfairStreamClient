@@ -7,3 +7,4 @@ It requires an appsettings.json in the StreamClientConsole project with this for
 <img width="449" height="217" alt="image" src="https://github.com/user-attachments/assets/912e81d9-7899-4504-b860-d3f8e9c127d7" />
 
 You'll need to get your account details setup with betfair. The Exchange stream needs to be enabled too.
+Obviously, use at own risk. This is for educational purposes.
