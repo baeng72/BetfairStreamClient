@@ -144,6 +144,8 @@ namespace BetfairStreamClient.Stream
                 if (reader.TokenType == JsonTokenType.StartObject)
                 {
                     long selectionId = 0;
+                    double lastTradedPrice = 0.0;
+                    double tradedVolume = 0.0;
 
                     // Allocate lightweight snapshots on the stack frame
                     Utf8JsonReader bdatbReader = default;
@@ -152,39 +154,66 @@ namespace BetfairStreamClient.Stream
                     Utf8JsonReader batlReader  = default;
                     Utf8JsonReader atbReader   = default;
                     Utf8JsonReader atlReader   = default;
+                    Utf8JsonReader trdReader = default;
+                    
 
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                     {
                         if (reader.TokenType == JsonTokenType.PropertyName)
                         {
-                            if (reader.ValueTextEquals("id")) 
-                            { 
-                                reader.Read(); 
-                                if (reader.TokenType == JsonTokenType.Number) selectionId = reader.GetInt64(); 
-                            }
-                            else if (reader.ValueTextEquals("bdatb")) { bdatbReader = reader; reader.Read(); reader.Skip(); }
-                            else if (reader.ValueTextEquals("bdatl")) { bdatlReader = reader; reader.Read(); reader.Skip(); }
-                            else if (reader.ValueTextEquals("batb"))  { batbReader  = reader; reader.Read(); reader.Skip(); }
-                            else if (reader.ValueTextEquals("batl"))  { batlReader  = reader; reader.Read(); reader.Skip(); }
-                            else if (reader.ValueTextEquals("atb"))   { atbReader   = reader; reader.Read(); reader.Skip(); }
-                            else if (reader.ValueTextEquals("atl"))   { atlReader   = reader; reader.Read(); reader.Skip(); }
-                            else
+                            if (reader.ValueTextEquals("id"))
                             {
                                 reader.Read();
-                                reader.Skip();
+                                if (reader.TokenType == JsonTokenType.Number) selectionId = reader.GetInt64();
                             }
+                            else if (reader.ValueTextEquals("ltp"))
+                            {
+                                reader.Read();
+                                if (reader.TokenType == JsonTokenType.Number)
+                                {
+                                    lastTradedPrice = reader.GetDouble();
+
+                                }
+                            }
+                            else if (reader.ValueTextEquals("tv"))
+                            {
+                                reader.Read();
+                                if (reader.TokenType == JsonTokenType.Number)
+                                {
+                                    tradedVolume = reader.GetDouble();
+                                }
+                            }
+                        else if (reader.ValueTextEquals("bdatb")) { bdatbReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("bdatl")) { bdatlReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("batb")) { batbReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("batl")) { batlReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("atb")) { atbReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("atl")) { atlReader = reader; reader.Read(); reader.Skip(); }
+                        else if (reader.ValueTextEquals("trd")) { trdReader = reader; reader.Read(); reader.Skip(); }
+                        else
+                        {
+                            reader.Read();
+                            reader.Skip();
+                        }
                         }
                     }
 
                     // --- DEFERRED PRICE STREAMING EXECUTION ---
                     if (selectionId != 0)
                     {
+                        var cache = _marketCache.GetOrCreateRunnerCache(marketId, selectionId);
+                        if(lastTradedPrice!=0.0)
+                            cache.SetLastTradedPrice(lastTradedPrice);
+                        if(tradedVolume!=0.0)
+                            cache.SetTotalVolume(tradedVolume);   
+
                         if (bdatbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatbReader, marketId, selectionId, BetfairLadderType.Bdatb);
                         if (bdatlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatlReader, marketId, selectionId, BetfairLadderType.Bdatl);
                         if (batbReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batbReader,  marketId, selectionId, BetfairLadderType.Batb);
                         if (batlReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batlReader,  marketId, selectionId, BetfairLadderType.Batl);
                         if (atbReader.TokenType   != JsonTokenType.None) StreamLadderDeltas(ref atbReader,   marketId, selectionId, BetfairLadderType.Atb);
                         if (atlReader.TokenType   != JsonTokenType.None) StreamLadderDeltas(ref atlReader,   marketId, selectionId, BetfairLadderType.Atl);
+                        if (trdReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref trdReader, marketId, selectionId, BetfairLadderType.Trd);
                     }
                 }
             }
@@ -192,19 +221,29 @@ namespace BetfairStreamClient.Stream
 
         private void StreamLadderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, BetfairLadderType type)
         {
-            reader.Read(); 
+            reader.Read();
+            bool isLevelPrizeSize = type == BetfairLadderType.Batl || type == BetfairLadderType.Batb ||
+                type == BetfairLadderType.Bdatb || type == BetfairLadderType.Bdatl;
             var cache = _marketCache.GetOrCreateRunnerCache(marketId, selectionId);
-
+            int i = 0;
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
                 if (reader.TokenType == JsonTokenType.StartArray) 
                 {
-                    reader.Read(); int level = (int)reader.GetDouble();
-                    reader.Read(); double price = reader.GetDouble();
-                    reader.Read(); double size = reader.GetDouble();
+                    reader.Read();
+                    int level = i++;
+                    if (isLevelPrizeSize)
+                    {
+                        level = (int)reader.GetDouble();
+                        reader.Read();
+                    }
+                    double price = reader.GetDouble();
                     reader.Read(); 
-
+                    double size = reader.GetDouble();
+                    reader.Read();
+                    
                     cache.UpdateSingleSlot(level, price, size, type);
+                    
                 }
             }
         }

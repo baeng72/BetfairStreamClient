@@ -223,7 +223,7 @@ namespace BetfairStreamClient.Stream
             };
             var marketDataFilter = new MarketDataFilter
             {
-                Fields = new List<MarketDataFilter.FieldsEnum?> { MarketDataFilter.FieldsEnum.ExBestOffers, MarketDataFilter.FieldsEnum.ExTraded, MarketDataFilter.FieldsEnum.ExTradedVol, MarketDataFilter.FieldsEnum.ExMarketDef}
+                Fields = new List<MarketDataFilter.FieldsEnum?> { MarketDataFilter.FieldsEnum.ExBestOffers, MarketDataFilter.FieldsEnum.ExTraded, MarketDataFilter.FieldsEnum.ExTradedVol, MarketDataFilter.FieldsEnum.ExMarketDef, MarketDataFilter.FieldsEnum.ExLtp}
             };
             var marketSubscription = new MarketSubscription
             {

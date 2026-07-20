@@ -14,7 +14,7 @@ namespace BetfairStreamClient.Stream
 
     public enum BetfairLadderType
     {
-        Bdatb = 0, Bdatl = 1, Batb = 2, Batl = 3, Atb = 4, Atl = 5
+        Bdatb = 0, Bdatl = 1, Batb = 2, Batl = 3, Atb = 4, Atl = 5, Trd = 6
     }
 
     public enum OrderSide { Back, Lay }
@@ -68,12 +68,21 @@ namespace BetfairStreamClient.Stream
         public PriceSize[] BestAvailableToLay { get; init; }
         public int BatlCount { get; init; }
 
+        public PriceSize[] Traded { get; init; }
+
+        public int TradedCount { get; init; }   
+
+        public double LastTradedPrice { get; init; }
+
+        public double TotalVolume { get; init; }
+
         public void Dispose()
         {
             if (BestDisplayAvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(BestDisplayAvailableToBack);
             if (BestDisplayAvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(BestDisplayAvailableToLay);
             if (BestAvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(BestAvailableToBack);
             if (BestAvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(BestAvailableToLay);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
     }
 

@@ -5,8 +5,10 @@ namespace BetfairStreamClient.Stream
     public class MarketRunnerCache
     {
         private const int MaxDepth = 20;
-        private readonly PriceSize[][] _ladders = new PriceSize[6][];
-        private readonly int[] _maxLevelsOccupied = new int[6];
+        private readonly PriceSize[][] _ladders = new PriceSize[7][];
+        private readonly int[] _maxLevelsOccupied = new int[7];
+        private double LastTradedPrice { get; set; }
+        private double TotalVolume { get; set; }
 
         public MarketRunnerCache()
         {
@@ -46,6 +48,14 @@ namespace BetfairStreamClient.Stream
             return maxOccupied == -1 ? ReadOnlySpan<PriceSize>.Empty : _ladders[typeIdx].AsSpan(0, maxOccupied + 1);
         }
 
+        public void SetLastTradedPrice(double ltp)
+        {
+            LastTradedPrice = ltp;
+        }
+        public void SetTotalVolume(double tv)
+        {
+            TotalVolume = tv;
+        }
         public RunnerSnap ExtractPooledSnapshot(long selectionId)
         {
             return new RunnerSnap
@@ -58,7 +68,11 @@ namespace BetfairStreamClient.Stream
                 BestAvailableToBack = RentAndCopy(BetfairLadderType.Batb, out int batbCount),
                 BatbCount = batbCount,
                 BestAvailableToLay = RentAndCopy(BetfairLadderType.Batl, out int batlCount),
-                BatlCount = batlCount
+                BatlCount = batlCount,
+                Traded = RentAndCopy(BetfairLadderType.Trd, out int trdCount),
+                TradedCount = trdCount,
+                LastTradedPrice = LastTradedPrice,
+                TotalVolume = TotalVolume,
             };
         }
 

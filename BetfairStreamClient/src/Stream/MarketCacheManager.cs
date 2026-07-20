@@ -9,6 +9,7 @@ namespace BetfairStreamClient.Stream
     public class MarketCacheManager
     {
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, MarketRunnerCache>> _marketCache = new();
+        private readonly ConcurrentDictionary<string, MarketDefinition> _marketDefinitions = new();
         public event EventHandler<MarketChangeNotification>? MarketNotificationReceived;
         
 
@@ -34,7 +35,10 @@ namespace BetfairStreamClient.Stream
         public void ProcessAndBroadcast(string marketId, MarketDefinition? definition)
         {
             if (!_marketCache.TryGetValue(marketId, out var runnersInMarket)) return;
-
+            if (definition != null)
+            {
+                _marketDefinitions[marketId] = definition;
+            }
             int totalRunners = runnersInMarket.Count;
             if (totalRunners == 0) return;
 
@@ -53,6 +57,28 @@ namespace BetfairStreamClient.Stream
             };
 
             MarketNotificationReceived?.Invoke(this, notification);
+        }
+
+        public MarketSnap? GetMarketSnap(string marketId)
+        {
+            if (!_marketCache.TryGetValue(marketId, out var runnersInMarket)) return null;
+            int totalRunners = runnersInMarket.Count;
+            if (totalRunners == 0) return null;
+
+            RunnerSnap[] pooledRunners = ArrayPool<RunnerSnap>.Shared.Rent(totalRunners);
+            int index = 0;
+            foreach (var kvp in runnersInMarket)
+            {
+                pooledRunners[index++] = kvp.Value.ExtractPooledSnapshot(kvp.Key);
+            }
+
+            return new MarketSnap { MarketId = marketId, Timestamp = DateTime.UtcNow, Runners = pooledRunners, RunnerCount = totalRunners };
+        }
+
+        public MarketDefinition? GetMarketDefinition(string marketId)
+        {
+            if(!_marketDefinitions.TryGetValue(marketId, out var definition)) return null;
+            return definition;
         }
     }
 

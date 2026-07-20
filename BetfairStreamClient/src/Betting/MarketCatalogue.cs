@@ -12,7 +12,7 @@ namespace BetfairStreamClient.Betting
         public string MarketName { get; set; } = "";
 
         [JsonPropertyName("marketStartTime")]
-        public DateTimeOffset? MarketStartTime { get; set; }
+        public DateTime? MarketStartTime { get; set; }
 
         [JsonPropertyName("totalMatched")]
         public double? TotalMatched { get; set; }
