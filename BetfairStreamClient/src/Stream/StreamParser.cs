@@ -352,6 +352,7 @@ namespace BetfairStreamClient.Stream
                 {
                     long betId = 0; double p = 0; double sr = 0; double sm = 0; 
                     OrderSide side = OrderSide.Back;
+                    OrderStatus status = OrderStatus.Executable;
 
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                     {
@@ -370,13 +371,20 @@ namespace BetfairStreamClient.Stream
                                 {
                                     Utf8Parser.TryParse(reader.ValueSpan, out betId, out _);
                                 }
+                            }else if (reader.ValueTextEquals("status"))
+                            {
+                                reader.Read();
+                                var statStr = reader.GetString();
+                                status = statStr == "EC" ? OrderStatus.ExecutionComplete : OrderStatus.Executable;
+
+
                             }
-                            else if (reader.ValueTextEquals("p"))  { reader.Read(); p = reader.GetDouble(); }
+                            else if (reader.ValueTextEquals("p")) { reader.Read(); p = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sr")) { reader.Read(); sr = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sm")) { reader.Read(); sm = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("s"))
                             {
-                                reader.Read(); 
+                                reader.Read();
                                 side = reader.ValueTextEquals("B") ? OrderSide.Back : OrderSide.Lay;
                             }
                             else

@@ -22,7 +22,7 @@ public class OrderRunnerCache
             }
 
             // Determine status changes
-            OrderStatus status = sizeRemaining == 0 ? OrderStatus.ExecutionComplete : (sizeMatched > 0 ? OrderStatus.Matched : OrderStatus.Unmatched);
+            OrderStatus status = sizeRemaining == 0 ? OrderStatus.ExecutionComplete : (sizeMatched > 0 ? OrderStatus.ExecutionComplete : OrderStatus.Executable);
 
             if (matchIndex != -1)
             {

@@ -228,7 +228,7 @@ namespace StreamClientConsole{
                 await Task.Delay(TimeSpan.FromSeconds(killDelaySeconds));
 
                 BetfairStreamClient.Stream.OrderStatus currentStatus = _orderBookManager.GetOrderStatus(betId);
-                if(currentStatus == BetfairStreamClient.Stream.OrderStatus.Unmatched)
+                if(currentStatus == BetfairStreamClient.Stream.OrderStatus.Executable)
                 {
                     // 4. Fire the cancel command. 
                     // If it's already 100% matched, Betfair API will safely return a 'BET_TAKEN_OR_LAPSED' error, which you can ignore.

@@ -18,7 +18,8 @@ namespace BetfairStreamClient.Stream
     }
 
     public enum OrderSide { Back, Lay }
-    public enum OrderStatus { Unmatched, Matched, ExecutionComplete }
+    //public enum OrderStatus { Unmatched, Matched, ExecutionComplete }
+    public enum OrderStatus { Executable, ExecutionComplete }
 
     public readonly struct OrderSnap
     {
