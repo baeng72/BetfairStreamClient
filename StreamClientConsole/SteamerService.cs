@@ -149,7 +149,7 @@ namespace StreamClientConsole{
 
                         double wom = SteamerDetector.WeightOfMoney(bestBackSize, bestLaySize);
                         
-                        if (_detector.IsSteaming(tracker, score, wom, tracker.ScheduledOff))// scheduledOff))
+                        if (_detector.IsSteaming(tracker, score, wom, tracker.ScheduledOff))
                         {
                             
                             string runnerName = runnerSnap.SelectionId.ToString();

@@ -46,7 +46,7 @@ namespace BetfairStreamClient.Stream
                     {
                         ParseMarketChangesArray(ref reader);
                     }
-                    else if (reader.ValueTextEquals("orc") && isOrderMessage)
+                    else if (reader.ValueTextEquals("oc") && isOrderMessage)
                     {
                         ParseOrderChangesArray(ref reader);
                     }
@@ -202,10 +202,10 @@ namespace BetfairStreamClient.Stream
                     if (selectionId != 0)
                     {
                         var cache = _marketCache.GetOrCreateRunnerCache(marketId, selectionId);
-                        if(lastTradedPrice!=0.0)
+                        if(lastTradedPrice>0.0)
                             cache.SetLastTradedPrice(lastTradedPrice);
-                        if(tradedVolume!=0.0)
-                            cache.SetTotalVolume(tradedVolume);   
+                        if(tradedVolume>0.0)
+                        cache.SetTotalVolume(tradedVolume);   
 
                         if (bdatbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatbReader, marketId, selectionId, BetfairLadderType.Bdatb);
                         if (bdatlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatlReader, marketId, selectionId, BetfairLadderType.Bdatl);
@@ -238,8 +238,7 @@ namespace BetfairStreamClient.Stream
                         reader.Read();
                     }
                     double price = reader.GetDouble();
-                    reader.Read(); 
-                    double size = reader.GetDouble();
+                    reader.Read(); double size = reader.GetDouble();
                     reader.Read();
                     
                     cache.UpdateSingleSlot(level, price, size, type);
@@ -352,7 +351,6 @@ namespace BetfairStreamClient.Stream
                 {
                     long betId = 0; double p = 0; double sr = 0; double sm = 0; 
                     OrderSide side = OrderSide.Back;
-                    OrderStatus status = OrderStatus.Executable;
 
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                     {
@@ -371,20 +369,13 @@ namespace BetfairStreamClient.Stream
                                 {
                                     Utf8Parser.TryParse(reader.ValueSpan, out betId, out _);
                                 }
-                            }else if (reader.ValueTextEquals("status"))
-                            {
-                                reader.Read();
-                                var statStr = reader.GetString();
-                                status = statStr == "EC" ? OrderStatus.ExecutionComplete : OrderStatus.Executable;
-
-
                             }
-                            else if (reader.ValueTextEquals("p")) { reader.Read(); p = reader.GetDouble(); }
+                            else if (reader.ValueTextEquals("p"))  { reader.Read(); p = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sr")) { reader.Read(); sr = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sm")) { reader.Read(); sm = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("s"))
                             {
-                                reader.Read();
+                                reader.Read(); 
                                 side = reader.ValueTextEquals("B") ? OrderSide.Back : OrderSide.Lay;
                             }
                             else
@@ -422,11 +413,17 @@ namespace BetfairStreamClient.Stream
             }
 
             // Print out the precise structural error detail to your console or diagnostic system
-            
-            _logger.Log($"[Betfair Stream Error] Connection ID: {connectionId}");
-            _logger.Log($"Status Code: {statusCode}");
-            _logger.Log($"Error Code: {errorCode}");
-            _logger.Log($"Details: {errorMessage}");
+            if (statusCode == "SUCCESS")
+            {
+                _logger.Log("Connected.");
+            }
+            else
+            {
+                _logger.Log($"[Betfair Stream Error] Connection ID: {connectionId}");
+                _logger.Log($"Status Code: {statusCode}");
+                _logger.Log($"Error Code: {errorCode}");
+                _logger.Log($"Details: {errorMessage}");
+            }
             
 
             // Trigger your recovery systems or stop the socket connection loop here if unauthorized

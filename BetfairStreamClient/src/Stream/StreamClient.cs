@@ -27,7 +27,8 @@ namespace BetfairStreamClient.Stream
         private readonly string _sessionToken;
         
         
-        private long _lastMessageTicks = DateTime.UtcNow.Ticks;
+        private long _lastResponseMessageTicks = DateTime.UtcNow.Ticks;
+        private long _lastRequestMessageTicks = DateTime.UtcNow.Ticks;
         private int _heartbeatIdCounter = 1000; // Distinct ID range for heartbeats
         private ConcurrentDictionary<string, long> runnerMap = new ConcurrentDictionary<string, long>();
         //Semaphore prevents concurrent writes to the newtork socket from different threads
@@ -160,7 +161,7 @@ namespace BetfairStreamClient.Stream
                     // High-performance thread-safe timestamp update
                     if (messageReceived)
                     {
-                        Interlocked.Exchange(ref _lastMessageTicks, DateTime.UtcNow.Ticks);
+                        Interlocked.Exchange(ref _lastResponseMessageTicks, DateTime.UtcNow.Ticks);
                     }
 
                     pipeReader.AdvanceTo(buffer.Start, buffer.End);
@@ -257,6 +258,7 @@ namespace BetfairStreamClient.Stream
             {
                 await sslStream.WriteAsync(bytes, cancellationToken);
                 await sslStream.FlushAsync(cancellationToken);
+                Interlocked.Exchange(ref _lastRequestMessageTicks, DateTime.UtcNow.Ticks);
             }
             finally
             {
@@ -312,11 +314,14 @@ namespace BetfairStreamClient.Stream
             while (!cancellationToken.IsCancellationRequested)
             {
                 // Thread-safe atomic read of the last message timestamp
-                long lastTicks = Interlocked.Read(ref _lastMessageTicks);
-                var lastMessageTime = new DateTime(lastTicks, DateTimeKind.Utc);
-                TimeSpan timeSinceLastMessage = DateTime.UtcNow - lastMessageTime;
-
-                if (timeSinceLastMessage >= heartbeatInterval)
+                long lastResponseTicks = Interlocked.Read(ref _lastResponseMessageTicks);
+                long lastRequestTicks = Interlocked.Read(ref _lastRequestMessageTicks);
+                var lastResponseMessageTime = new DateTime(lastResponseTicks, DateTimeKind.Utc);
+                var lastRequestMessageTime = new DateTime(lastRequestTicks, DateTimeKind.Utc);
+                TimeSpan timeSinceLastResponseMessage = DateTime.UtcNow - lastResponseMessageTime;
+                TimeSpan timeSinceLastRequestMessage = DateTime.UtcNow - lastRequestMessageTime;
+                TimeSpan timeoutRequest = TimeSpan.FromHours(1);
+                if (timeSinceLastResponseMessage >= heartbeatInterval || timeSinceLastRequestMessage >= timeoutRequest)
                 {
                     try
                     {
@@ -338,12 +343,14 @@ namespace BetfairStreamClient.Stream
                     }
 
                     // Reset our tracking marker so we don't spam if SendJsonAsync took time
-                    Interlocked.Exchange(ref _lastMessageTicks, DateTime.UtcNow.Ticks);
-                    timeSinceLastMessage = TimeSpan.Zero;
+                    Interlocked.Exchange(ref _lastResponseMessageTicks, DateTime.UtcNow.Ticks);
+                    Interlocked.Exchange(ref _lastRequestMessageTicks, DateTime.UtcNow.Ticks);
+                    timeSinceLastRequestMessage = TimeSpan.Zero;
+                    timeSinceLastResponseMessage = TimeSpan.Zero;
                 }
 
                 // Dynamically sleep for only the time remaining in the 5-second window
-                TimeSpan nextCheck = heartbeatInterval - timeSinceLastMessage;
+                TimeSpan nextCheck = heartbeatInterval - timeSinceLastResponseMessage;
                 if (nextCheck <= TimeSpan.Zero) nextCheck = heartbeatInterval;
 
                 try
