@@ -86,17 +86,7 @@ namespace BetfairStreamClient.src.Nav
             finally
             {
                 _semaphore.Release();
-            }
-            //using (var streamReader = new StreamReader(inputStream, Encoding.UTF8))
-            //using (var jsonReader = new JsonTextReader(streamReader))
-            //{
-            //    var serializer = new JsonSerializer();
-            //    var jsonResponse = serializer.Deserialize<T>(jsonReader);
-
-            //    return jsonResponse ?? throw new InvalidOperationException("Deserialization returned null.");
-            //}
+            }   
         }
-
-        
     }
 }
