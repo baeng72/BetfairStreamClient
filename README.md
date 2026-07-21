@@ -1,6 +1,6 @@
 # BetfairStreamClient
 Betfair exchange stream client.
-Also contains minimal (i.e. missing stuff) authorization, in player service, betting api.
+Also contains minimal (i.e. missing stuff) authorization, in player service, betting api, account api, navigation api.
 There's a simple app that doesn't do much, but shows how to work with some of the parts.
 It requires an appsettings.json in the StreamClientConsole project with this format:
 
