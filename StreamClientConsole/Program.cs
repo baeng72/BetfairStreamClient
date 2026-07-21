@@ -6,6 +6,7 @@ using BetfairStreamClient.Logging;
 using System.Threading.Channels;
 using StreamClientConsole;
 using System.Net.Mail;
+using BetfairStreamClient.src.Account;
 
 try
 {
@@ -43,7 +44,13 @@ try
     }
     //list current horse racing markets in AU and NZ
     HttpClient _httpClient = new HttpClient();
-    var betfairAsyncClient = new BetfairAsyncClient(_httpClient, session.AppKey, session.Token);    
+    var betfairAccountClient = new BetfairAccountsClient(_httpClient, session.AppKey, session.Token);
+    var funds = await betfairAccountClient.GetAccountFunds(Wallet.UK, cancellationToken);
+    if (funds != null)
+    {
+        Console.WriteLine($"Funds: {funds.AvailableToBetBalance}");
+    }
+    var betfairAsyncClient = new BettingClient(_httpClient, session.AppKey, session.Token);    
     Directory.CreateDirectory(logDir);
     await using var logger = new Logger();
     logger.Init(Path.Combine(logDir, $"strategy_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.csv"), cancellationToken);

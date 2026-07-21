@@ -12,7 +12,7 @@ namespace StreamClientConsole{
     {
         private readonly StreamClient _streamClient;
 
-        private readonly BetfairAsyncClient _bettingClient;
+        private readonly BettingClient _bettingClient;
 
         private readonly Logger _logger;
 
@@ -33,7 +33,7 @@ namespace StreamClientConsole{
 
         private readonly PendingLayMonitor _pendingLayMonitor;
 
-        public SteamerService(BetfairAsyncClient bettingClient, StreamClient streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
+        public SteamerService(BettingClient bettingClient, StreamClient streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
         {
             _bettingClient = bettingClient ?? throw new ArgumentNullException();
             _streamClient = streamClient ?? throw new ArgumentNullException();

@@ -12,7 +12,7 @@ using static System.Net.WebRequestMethods;
 
 namespace BetfairStreamClient.Betting
 {
-    public sealed class BetfairAsyncClient : IAsyncDisposable
+    public sealed class BettingClient : IAsyncDisposable
     {
         private readonly string _appKey;
         private readonly string _sessionToken;
@@ -20,7 +20,7 @@ namespace BetfairStreamClient.Betting
         private readonly HttpClient _http;
         private readonly SemaphoreSlim _semaphore;
         private int _idCounter;
-        public BetfairAsyncClient(HttpClient httpClient,string appKey, string sessionToken, TimeSpan? timeout=null)
+        public BettingClient(HttpClient httpClient,string appKey, string sessionToken, TimeSpan? timeout=null)
         {
             _appKey = appKey;
             _sessionToken = sessionToken;
@@ -30,12 +30,11 @@ namespace BetfairStreamClient.Betting
         }
         public async ValueTask DisposeAsync()
         {
-            _http.Dispose();            
+            //_http.Dispose();            
             await Task.CompletedTask;
         }
 
-        private async Task<TResult> CallAsync<TParams, TResult>(
-    string method, TParams @params, bool retryOnAuthFailure = true, CancellationToken ct = default)
+        private async Task<TResult> CallAsync<TParams, TResult>(    string method, TParams @params, bool retryOnAuthFailure = true, CancellationToken ct = default)
         {
             if (_sessionToken is null)
                 throw new InvalidOperationException("No session token; call LoginAsync() first.");
@@ -170,7 +169,7 @@ namespace BetfairStreamClient.Betting
                 {
                     MarketId = marketId,
                     Instructions = instructions,
-                    CustomerRef = customerOrderRef
+                    CustomerRef = customerOrderRef,
                     Async = true
                 };
                 return CallAsync<PlaceOrderParamsAsync, PlaceExecutionReport>("placeOrders", @paramsAsync, ct: ct);
@@ -202,7 +201,7 @@ namespace BetfairStreamClient.Betting
                 {
                     MarketId = marketId,
                     Instructions = instructions,
-                    CustomerRef = customerRef,
+                    CustomerRef = customerOrderRef,
                     
                 };
             return CallAsync<PlaceOrdersParams, PlaceExecutionReport>("placeOrders", @params, ct: ct);

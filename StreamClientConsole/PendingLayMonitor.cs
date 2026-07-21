@@ -18,11 +18,11 @@ namespace StreamClientConsole{
 
         private readonly ConcurrentDictionary<MarketSelection,PendingLay> _pending = new();
         //private readonly ConcurrentBag<PendingLay> _pending = new();
-        private readonly BetfairAsyncClient _api;
+        private readonly BettingClient _api;
 
         private static int _layCount=0;
         private readonly Logger _logger;
-        public PendingLayMonitor(BetfairAsyncClient api, Logger logger)
+        public PendingLayMonitor(BettingClient api, Logger logger)
             {
                 _api = api;
                 _logger = logger;
