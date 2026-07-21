@@ -31,6 +31,8 @@ namespace BetfairStreamClient.src.Account
             _http = httpClient;
             _appKey = appKey;
             _sessionToken = sessionToken;
+            _semaphore = new SemaphoreSlim(20);
+
         }
 
         public async ValueTask DisposeAsync()
