@@ -160,8 +160,8 @@ namespace BetfairStreamClient.Betting
         public Task<PlaceExecutionReport> PlaceOrdersAsync(
             string marketId,
             List<PlaceInstruction> instructions,
-            string? customerRef = null,      
-            string? customerStrategyRef = null,
+            string? customerStrategyRef = null,      
+            string? customerOrderRef = null,
             bool async = false,
             CancellationToken ct = default)
         {
@@ -170,7 +170,7 @@ namespace BetfairStreamClient.Betting
                 {
                     MarketId = marketId,
                     Instructions = instructions,
-                    CustomerRef = customerRef,
+                    CustomerRef = customerOrderRef
                     Async = true
                 };
                 return CallAsync<PlaceOrderParamsAsync, PlaceExecutionReport>("placeOrders", @paramsAsync, ct: ct);
@@ -181,7 +181,7 @@ namespace BetfairStreamClient.Betting
                 {
                     MarketId = marketId,
                     Instructions = instructions,
-                    CustomerRef = customerRef,
+                    CustomerRef = customerOrderRef,
                     CustomerStrategyRef = customerStrategyRef,
                     Async = true
                 };
@@ -192,7 +192,7 @@ namespace BetfairStreamClient.Betting
                 {
                     MarketId = marketId,
                     Instructions = instructions,
-                    CustomerRef = customerRef,
+                    CustomerRef = customerOrderRef,
                     CustomerStrategyRef = customerStrategyRef,
                                     };
                 return CallAsync<PlaceOrderParamsCustomerStrategyRef, PlaceExecutionReport>("placeOrders", @paramsRef, ct: ct);
