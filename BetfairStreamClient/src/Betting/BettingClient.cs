@@ -87,10 +87,7 @@ namespace BetfairStreamClient.Betting
                     ? throw new BetfairHttpException(200, "Payload result was null.")
                     : payload.Result;
             }
-            catch(Exception ex)
-            {
-                _logger.Log($"[BETTINGCLIENT] Error: {ex.Message}");
-            }
+            
             finally
             {
                 _semaphore.Release();
