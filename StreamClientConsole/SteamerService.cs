@@ -196,8 +196,8 @@ namespace StreamClientConsole{
         public async Task PlaceFillOrKillBackBetAsync(string marketId, long selectionId, double price, double size, int killDelaySeconds, RunnerTracker tracker)
         {
             string betRef = $"STREN-{_betCount++}";
-            var limitOrder = new LimitOrder(_stakePerBet, price,PersistenceType.LAPSE);
-            var placeInstruction = new PlaceInstruction(selectionId,Side.BACK,limitOrder,OrderType.LIMIT,betRef);
+            var limitOrder = new LimitOrder(_stakePerBet, price,BetfairStreamClient.Betting.PersistenceType.LAPSE);
+            var placeInstruction = new PlaceInstruction(selectionId,Side.BACK,limitOrder,BetfairStreamClient.Betting.OrderType.LIMIT,betRef);
             var placeInstructions = new List<PlaceInstruction>{ placeInstruction };
             PlaceExecutionReport placeReport;
             try{
@@ -227,8 +227,8 @@ namespace StreamClientConsole{
                 // 3. Start the asynchronous "Kill" clock without blocking your main thread
                 await Task.Delay(TimeSpan.FromSeconds(killDelaySeconds));
 
-                BetfairStreamClient.Stream.OrderStatus currentStatus = _orderBookManager.GetOrderStatus(betId);
-                if(currentStatus == BetfairStreamClient.Stream.OrderStatus.Executable)
+                StatusEnum currentStatus = _orderBookManager.GetOrderStatus(betId);
+                if(currentStatus == StatusEnum.EXECUTABLE)
                 {
                     // 4. Fire the cancel command. 
                     // If it's already 100% matched, Betfair API will safely return a 'BET_TAKEN_OR_LAPSED' error, which you can ignore.
@@ -275,8 +275,8 @@ namespace StreamClientConsole{
         private async Task ExecuteTradeAsync(string marketId, long runnerId, double currentPrice)
         {
             string betRef = $"STREN-{_betCount++}";
-            var limitOrder = new LimitOrder(_stakePerBet, currentPrice,PersistenceType.LAPSE);
-            var placeInstruction = new PlaceInstruction(runnerId,Side.BACK,limitOrder,OrderType.LIMIT,betRef);
+            var limitOrder = new LimitOrder(_stakePerBet, currentPrice,BetfairStreamClient.Betting.PersistenceType.LAPSE);
+            var placeInstruction = new PlaceInstruction(runnerId,Side.BACK,limitOrder,BetfairStreamClient.Betting.OrderType.LIMIT,betRef);
             var placeInstructions = new List<PlaceInstruction>{ placeInstruction };
             var backResult = await _bettingClient.PlaceOrdersAsync(marketId,        placeInstructions,"STRACE",betRef);
             // 1. Place back bet

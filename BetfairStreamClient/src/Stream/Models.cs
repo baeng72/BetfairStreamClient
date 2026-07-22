@@ -1,4 +1,7 @@
+using BetfairStreamClient.Stream;
 using System.Buffers;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace BetfairStreamClient.Stream
 {
@@ -17,9 +20,9 @@ namespace BetfairStreamClient.Stream
         Bdatb = 0, Bdatl = 1, Batb = 2, Batl = 3, Atb = 4, Atl = 5, Trd = 6
     }
 
-    public enum OrderSide { Back, Lay }
+    //public enum OrderSide { Back, Lay }
     //public enum OrderStatus { Unmatched, Matched, ExecutionComplete }
-    public enum OrderStatus { Executable, ExecutionComplete }
+    
 
     public readonly struct OrderSnap
     {
@@ -27,10 +30,10 @@ namespace BetfairStreamClient.Stream
         public double Price { get; }
         public double SizeRemaining { get; }
         public double SizeMatched { get; }
-        public OrderSide Side { get; }
-        public OrderStatus Status { get; }
+        public SideEnum Side { get; }
+        public StatusEnum Status { get; }
 
-        public OrderSnap(long betId, double price, double sizeRemaining, double sizeMatched, OrderSide side, OrderStatus status)
+        public OrderSnap(long betId, double price, double sizeRemaining, double sizeMatched, SideEnum side, StatusEnum status)
         {
             BetId = betId; Price = price; SizeRemaining = sizeRemaining; SizeMatched = sizeMatched; Side = side; Status = status;
         }

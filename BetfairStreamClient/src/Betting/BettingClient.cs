@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BetfairStreamClient.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -20,11 +21,13 @@ namespace BetfairStreamClient.Betting
         private readonly HttpClient _http;
         private readonly SemaphoreSlim _semaphore;
         private int _idCounter;
-        public BettingClient(HttpClient httpClient,string appKey, string sessionToken, TimeSpan? timeout=null)
+        private Logger _logger;
+        public BettingClient(HttpClient httpClient,Logger logger, string appKey, string sessionToken, TimeSpan? timeout=null)
         {
             _appKey = appKey;
             _sessionToken = sessionToken;
             _http = httpClient;
+            _logger = logger;
             _semaphore = new SemaphoreSlim(20);
 
         }
@@ -45,6 +48,7 @@ namespace BetfairStreamClient.Betting
                 Params = @params,
                 Id = Interlocked.Increment(ref _idCounter),
             };
+            _logger.Log($"[BETTINGCALLASYNC] Request: {requestBody}");
 
             await _semaphore.WaitAsync(ct);
 
@@ -159,52 +163,25 @@ namespace BetfairStreamClient.Betting
         public Task<PlaceExecutionReport> PlaceOrdersAsync(
             string marketId,
             List<PlaceInstruction> instructions,
+            string? customerRef = null,
             string? customerStrategyRef = null,      
-            string? customerOrderRef = null,
-            bool async = false,
+            
+            bool async =  false,
             CancellationToken ct = default)
         {
-            if (async && string.IsNullOrEmpty(customerStrategyRef)){
-                var @paramsAsync = new PlaceOrderParamsAsync
-                {
-                    MarketId = marketId,
-                    Instructions = instructions,
-                    CustomerRef = customerOrderRef,
-                    Async = true
-                };
-                return CallAsync<PlaceOrderParamsAsync, PlaceExecutionReport>("placeOrders", @paramsAsync, ct: ct);
-            }
-            else if (async && !string.IsNullOrEmpty(customerStrategyRef))
+            
+            var @params = new PlaceOrderParams
             {
-                var @paramsRefAsync = new PlaceOrderParamsCustomerStrategyRefAsync
-                {
-                    MarketId = marketId,
-                    Instructions = instructions,
-                    CustomerRef = customerOrderRef,
-                    CustomerStrategyRef = customerStrategyRef,
-                    Async = true
-                };
-                return CallAsync<PlaceOrderParamsCustomerStrategyRefAsync, PlaceExecutionReport>("placeOrders", @paramsRefAsync, ct: ct);
-            }
-            else if (!async && !string.IsNullOrEmpty(customerStrategyRef)) {
-                var @paramsRef = new PlaceOrderParamsCustomerStrategyRef
-                {
-                    MarketId = marketId,
-                    Instructions = instructions,
-                    CustomerRef = customerOrderRef,
-                    CustomerStrategyRef = customerStrategyRef,
-                                    };
-                return CallAsync<PlaceOrderParamsCustomerStrategyRef, PlaceExecutionReport>("placeOrders", @paramsRef, ct: ct);
-
-            }
-                var @params = new PlaceOrdersParams
-                {
-                    MarketId = marketId,
-                    Instructions = instructions,
-                    CustomerRef = customerOrderRef,
-                    
-                };
-            return CallAsync<PlaceOrdersParams, PlaceExecutionReport>("placeOrders", @params, ct: ct);
+                MarketId = marketId,
+                Instructions = instructions,
+                CustomerRef = customerRef,
+                CustomerStrategyRef = customerStrategyRef,                    
+                Async = async ?  true : null
+            };
+            return CallAsync<PlaceOrderParams, PlaceExecutionReport>("placeOrders", @params, ct: ct);
+            
+            
+            
         }
 
         /// <summary>
@@ -271,29 +248,21 @@ namespace BetfairStreamClient.Betting
         }
 
 
-        private class PlaceOrdersParams
+        private class PlaceOrderParams
         {
             [JsonPropertyName("marketId")] public string MarketId { get; set; } = "";
             [JsonPropertyName("instructions")] public List<PlaceInstruction> Instructions { get; set; } = new();
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             [JsonPropertyName("customerRef")] public string? CustomerRef { get; set; }
-            
-            
-        }
-        private sealed class PlaceOrderParamsAsync : PlaceOrdersParams {
-            [JsonPropertyName("async")] public bool? Async { get; set; }
-        }
 
-        private sealed class PlaceOrderParamsCustomerStrategyRef : PlaceOrdersParams
-        {
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             [JsonPropertyName("customerStrategyRef")] public string? CustomerStrategyRef { get; set; }
 
-        }
-            private sealed class PlaceOrderParamsCustomerStrategyRefAsync : PlaceOrdersParams
-        {
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             [JsonPropertyName("async")] public bool? Async { get; set; }
-            [JsonPropertyName("customerStrategyRef")] public string? CustomerStrategyRef { get; set; }
-
         }
+        
 
         private sealed class CancelOrdersParams
         {

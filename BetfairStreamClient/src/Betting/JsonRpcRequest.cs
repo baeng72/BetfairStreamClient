@@ -15,7 +15,7 @@ namespace BetfairStreamClient.Betting
         [JsonPropertyName("method")]
         public string Method { get; set; } = "";
 
-        [JsonPropertyName("params")]
+        [JsonPropertyName("params")]        
         public TParams? Params { get; set; }
 
         [JsonPropertyName("id")]

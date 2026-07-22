@@ -50,10 +50,11 @@ try
     {
         Console.WriteLine($"Funds: {funds.AvailableToBetBalance}");
     }
-    var betfairAsyncClient = new BettingClient(_httpClient, session.AppKey, session.Token);    
     Directory.CreateDirectory(logDir);
     await using var logger = new Logger();
     logger.Init(Path.Combine(logDir, $"strategy_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.csv"), cancellationToken);
+    var betfairAsyncClient = new BettingClient(_httpClient, logger, session.AppKey, session.Token);    
+    
     await using var streamDumper = new RawStreamDumper();
     streamDumper.Init(Path.Combine(logDir, $"raw_string_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.json"), cancellationToken);
 

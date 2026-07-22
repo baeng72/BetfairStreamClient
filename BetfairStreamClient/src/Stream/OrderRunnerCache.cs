@@ -1,13 +1,36 @@
 
+using System.Drawing;
+using System.Runtime.Serialization;
+
 namespace BetfairStreamClient.Stream
 {
 public class OrderRunnerCache
     {
         private const int MaxActiveOrdersPerRunner = 100;
+        private const int MaxMatched = 20;
         private readonly OrderSnap[] _orders = new OrderSnap[MaxActiveOrdersPerRunner];
+        private readonly PriceSize[] _matchedBacks = new PriceSize[MaxMatched];
+        private readonly PriceSize[] _matchedLays = new PriceSize[MaxMatched];
+        private int _matchedBackCount = 0;
+        private int _matchedLayCount = 0;
         public int ActiveCount { get; private set; } = 0;
 
-        public void UpdateOrAddOrder(long betId, double price, double sizeRemaining, double sizeMatched, OrderSide side)
+        public void ResetMatchedCount()
+        {
+            _matchedBackCount = _matchedLayCount = 0;
+        }
+
+        public void UpdateMatchedBack(double price, double size)
+        {
+            _matchedBacks[_matchedBackCount++] = new PriceSize(price, size);
+            
+        }
+        public void UpdateMatchedLay(double price, double size)
+        {
+            _matchedLays[_matchedLayCount++] = new PriceSize(price, size);
+        }
+
+        public void UpdateOrAddOrder(long betId, double price, double sizeRemaining, double sizeMatched, double sizeVoid, SideEnum side, StatusEnum status, PtEnum persistence, OtEnum type)
         {
             int matchIndex = -1;
 
@@ -22,11 +45,11 @@ public class OrderRunnerCache
             }
 
             // Determine status changes
-            OrderStatus status = sizeRemaining == 0 ? OrderStatus.ExecutionComplete : (sizeMatched > 0 ? OrderStatus.ExecutionComplete : OrderStatus.Executable);
+            
 
             if (matchIndex != -1)
             {
-                if (status == OrderStatus.ExecutionComplete)
+                if (status == StatusEnum.EXECUTION_COMPLETE)
                 {
                     // Order closed: swap the last active slot into this position to maintain array density
                     _orders[matchIndex] = _orders[ActiveCount - 1];
@@ -39,7 +62,7 @@ public class OrderRunnerCache
                     _orders[matchIndex] = new OrderSnap(betId, price, sizeRemaining, sizeMatched, side, status);
                 }
             }
-            else if (status != OrderStatus.ExecutionComplete && ActiveCount < MaxActiveOrdersPerRunner)
+            else if (status != StatusEnum.EXECUTION_COMPLETE && ActiveCount < MaxActiveOrdersPerRunner)
             {
                 // Register brand new order
                 _orders[ActiveCount++] = new OrderSnap(betId, price, sizeRemaining, sizeMatched, side, status);

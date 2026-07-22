@@ -323,18 +323,57 @@ namespace BetfairStreamClient.Stream
                 {
                     if (reader.ValueTextEquals("id")) 
                     { 
-                        reader.Read(); 
-                        if (reader.TokenType == JsonTokenType.Number) selectionId = reader.GetInt64(); 
+                        reader.Read();
+                        if (reader.TokenType == JsonTokenType.Number)
+                        {
+
+                            selectionId = reader.GetInt64();
+                            var runnerCache = _orderCache.GetOrCreateRunnerCache(marketId, selectionId);
+                            runnerCache.ResetMatchedCount();
+                        }
                     }
                     else if (reader.ValueTextEquals("uo"))
                     {
                         StreamOrders(ref reader, marketId, selectionId);
+                    }
+                    else if (reader.ValueTextEquals("mb"))
+                    {
+                        //Matched back
+                        StreamOrderDeltas(ref reader, marketId, selectionId, true);
+                    }
+                    else if (reader.ValueTextEquals("ml"))
+                    {
+                        StreamOrderDeltas(ref reader, marketId, selectionId, false);
                     }
                     else
                     {
                         reader.Read();
                         reader.Skip();
                     }
+                }
+            }
+        }
+
+        private void StreamOrderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, bool isBack)
+        {
+            reader.Read();
+            var runnerCache = _orderCache.GetOrCreateRunnerCache(marketId, selectionId);
+            int i = 0;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (reader.TokenType == JsonTokenType.StartArray)
+                {
+                    reader.Read();
+                    double price = reader.GetDouble();
+                    reader.Read();
+                    double size = reader.GetDouble();
+                    
+                    reader.Read();
+                    if (isBack)
+                        runnerCache.UpdateMatchedBack(price, size);
+                    else
+                        runnerCache.UpdateMatchedLay(price, size);
+
                 }
             }
         }
@@ -349,8 +388,11 @@ namespace BetfairStreamClient.Stream
             {
                 if (reader.TokenType == JsonTokenType.StartArray)
                 {
-                    long betId = 0; double p = 0; double sr = 0; double sm = 0; 
-                    OrderSide side = OrderSide.Back;
+                    long betId = 0; double p = 0; double sr = 0; double sm = 0; double sv=0; 
+                    SideEnum side = SideEnum.Back;
+                    OtEnum ot = OtEnum.LIMIT;
+                    PtEnum pt = PtEnum.LAPSE;
+                    StatusEnum status = StatusEnum.EXECUTABLE;
 
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                     {
@@ -373,10 +415,19 @@ namespace BetfairStreamClient.Stream
                             else if (reader.ValueTextEquals("p"))  { reader.Read(); p = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sr")) { reader.Read(); sr = reader.GetDouble(); }
                             else if (reader.ValueTextEquals("sm")) { reader.Read(); sm = reader.GetDouble(); }
-                            else if (reader.ValueTextEquals("s"))
+                            else if (reader.ValueTextEquals("sv")) { reader.Read(); sv = reader.GetDouble(); }
+                            else if(reader.ValueTextEquals("pt")) { reader.Read(); pt = Enum.Parse<PtEnum>(reader.GetString()); }
+                            else if(reader.ValueTextEquals("ot")) { reader.Read(); ot = Enum.Parse<OtEnum>(reader.GetString()); }
+                            else if (reader.ValueTextEquals("side"))
                             {
-                                reader.Read(); 
-                                side = reader.ValueTextEquals("B") ? OrderSide.Back : OrderSide.Lay;
+                                reader.Read();
+                                side = Enum.Parse<SideEnum>(reader.GetString());                                
+                            }
+                            else if (reader.ValueTextEquals("status"))
+                            {
+                                reader.Read();
+                                status = Enum.Parse<StatusEnum>(reader.GetString());
+                                
                             }
                             else
                             {
@@ -385,7 +436,7 @@ namespace BetfairStreamClient.Stream
                             }
                         }
                     }
-                    runnerCache.UpdateOrAddOrder(betId, p, sr, sm, side);
+                    runnerCache.UpdateOrAddOrder(betId, p, sr, sm, sv, side, status, pt, ot);
                 }
             }
         }
