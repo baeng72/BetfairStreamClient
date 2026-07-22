@@ -48,7 +48,7 @@ namespace BetfairStreamClient.Betting
                 Params = @params,
                 Id = Interlocked.Increment(ref _idCounter),
             };
-            _logger.Log($"[BETTINGCALLASYNC] Request: {requestBody}");
+            
 
             await _semaphore.WaitAsync(ct);
 
@@ -86,6 +86,10 @@ namespace BetfairStreamClient.Betting
                 return payload.Result is null
                     ? throw new BetfairHttpException(200, "Payload result was null.")
                     : payload.Result;
+            }
+            catch(Exception ex)
+            {
+                _logger.Log($"[BETTINGCLIENT] Error: {ex.Message}");
             }
             finally
             {
