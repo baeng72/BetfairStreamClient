@@ -304,8 +304,8 @@ namespace BetfairStreamClient.Stream
                         {
                             ParseOrderRunnerChanges(ref deferredOrderReader, currentMarketId);
                         }
-
-                        _orderCache.ProcessAndBroadcast(currentMarketId);
+                        if(hasOrderChanges)
+                            _orderCache.ProcessAndBroadcast(currentMarketId);
                     }
                 }
             }
