@@ -22,7 +22,7 @@ namespace BetfairStreamClient.ExchangeStream
             _logger = logger;
         }
 
-                public void ParseMessageNoAllocations(byte[] bytes, int length)
+        public void ParseMessageNoAllocations(byte[] bytes, int length)
         {
             var reader = new Utf8JsonReader(bytes.AsSpan(0, length));
             bool isOrderMessage = false;
@@ -135,166 +135,7 @@ namespace BetfairStreamClient.ExchangeStream
             }
         }
 
-        private void ParseRunnerChanges(ref Utf8JsonReader reader, string? marketId)
-        {
-            if (marketId == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if (reader.TokenType == JsonTokenType.StartObject)
-                {
-                    RunnerChange rc = new RunnerChange();
-                    
-
-                    // Allocate lightweight snapshots on the stack frame
-                    Utf8JsonReader bdatbReader = default;
-                    Utf8JsonReader bdatlReader = default;
-                    Utf8JsonReader batbReader = default;
-                    Utf8JsonReader batlReader = default;
-                    Utf8JsonReader atbReader = default;
-                    Utf8JsonReader atlReader = default;
-                    Utf8JsonReader spbReader = default;
-                    Utf8JsonReader splReader = default;
-                    Utf8JsonReader trdReader = default;
-                    LevelDelta[] levels = new LevelDelta[20];
-                    PriceSize[] prices = new PriceSize[20];
-
-
-                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
-                    {
-                        if (reader.TokenType == JsonTokenType.PropertyName)
-                        {
-                            string propertyName = reader.GetString();
-                            reader.Read();
-                            switch (propertyName)
-                            {
-                                case "id":  //selection id
-                                    rc.SelectionId = reader.GetInt64();                                    
-                                    break;
-                                case "tv":  //traded volumn
-                                    rc.TotalVolume = reader.GetDouble();                                    
-                                    break;
-                                case "ltp": //last traded price
-                                    rc.LastTradedPrice = reader.GetDouble();
-                                    break;
-                                case "spn": //starting price near
-                                    rc.StartingPriceNear = reader.GetDouble();
-                                    break;
-                                case "spf":
-                                    rc.StartingPriceFar = reader.GetDouble();
-                                    break;
-                                case "batb":    //best available to back
-                                    batbReader = reader;
-                                    StreamLadderDeltas(ref reader, ref levels);
-                                    rc.BestAvailableToBack = new LevelDelta[levels.Length];
-                                    Array.Copy(levels, rc.BestAvailableToBack, levels.Length);                                                                        
-                                    break;
-                                case "batl":    //best available to lay
-                                    batlReader = reader;
-                                    StreamLadderDeltas(ref reader, ref levels);
-                                    rc.BestAvailableToLay = new LevelDelta[levels.Length];
-                                    Array.Copy(levels, rc.BestAvailableToLay, levels.Length);
-                                    break;
-                                case "bdatb":   //best display availabe to back
-                                    bdatlReader = reader;
-                                    StreamLadderDeltas(ref reader, ref levels);
-                                    rc.BestDisplayAvailableToBack = new LevelDelta[levels.Length];
-                                    Array.Copy(levels, rc.BestDisplayAvailableToBack, levels.Length);
-                                    break;
-                                case "bdatl":   //best display available to lay
-                                    bdatlReader = reader;
-                                    StreamLadderDeltas(ref reader, ref levels);
-                                    rc.BestDisplayAvailableToLay = new LevelDelta[levels.Length];
-                                    Array.Copy(levels, rc.BestDisplayAvailableToLay, levels.Length);
-                                    break;
-                                case "atb":     //available to back
-                                    StreamPrizeSizeDeltas(ref reader, ref prices);
-                                    rc.AvailableToBack = new PriceSize[prices.Length];
-                                    Array.Copy(levels, rc.AvailableToBack, prices.Length);
-
-                                    atbReader = reader;
-                                    break;
-                                case "atl":     //available to lay
-                                    StreamPrizeSizeDeltas(ref reader, ref prices);
-                                    rc.AvailableToLay = new PriceSize[prices.Length];
-                                    Array.Copy(levels, rc.AvailableToLay, prices.Length);   
-                                    break;
-                                case "spb":     //starting price (available to) back
-                                    StreamPrizeSizeDeltas(ref reader, ref prices);
-                                    rc.StartingPriceBack = new PriceSize[prices.Length];
-                                    Array.Copy(levels, rc.StartingPriceBack, prices.Length);
-                                    spbReader = reader;
-                                    break;
-                                case "spl":
-                                    StreamPrizeSizeDeltas(ref reader, ref prices);
-                                    rc.StartingPriceLay = new PriceSize[prices.Length];
-                                    Array.Copy(levels, rc.StartingPriceLay, prices.Length);
-                                    splReader = reader;
-                                    break;
-                                case "trd":
-                                    StreamPrizeSizeDeltas(ref reader, ref prices);
-                                    rc.TradedPriceVolume = new PriceSize[prices.Length];
-                                    Array.Copy(levels, rc.TradedPriceVolume, prices.Length);
-                                    trdReader = reader;
-                                    break;
-                                default:
-                                    break;
-
-                            }
-                            reader.Read();
-                            reader.Skip();
-                        }
-                    }
-                    if(rc.SelectionId != 0)
-                    {
-                        if (bdatbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatbReader,ref levels);// marketId, selectionId, BetfairLadderType.Bdatb);
-                        if (bdatlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatlReader, ref levels);
-                        if (batbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref batbReader, marketId, selectionId, BetfairLadderType.Batb);
-                        if (batlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref batlReader, marketId, selectionId, BetfairLadderType.Batl);
-                        if (atbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref atbReader, marketId, selectionId, BetfairLadderType.Atb);
-                        if (atlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref atlReader, marketId, selectionId, BetfairLadderType.Atl);
-                        if (trdReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref trdReader, marketId, selectionId, BetfairLadderType.Trd);
-                    }
-                }
-            }
-        }
-
-        private void StreamLadderDeltas(ref Utf8JsonReader reader,ref LevelDelta[] levelDeltas)
-        {
-            reader.Read();         
-            int i = 0;
-            
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if (reader.TokenType == JsonTokenType.StartArray)
-                {
-                    reader.Read();
-                    int level = (int)reader.GetDouble();
-                    reader.Read();
-                    double price = reader.GetDouble();
-                    reader.Read(); 
-                    double size = reader.GetDouble();
-                    reader.Read();
-                    levelDeltas[i++] = new LevelDelta(level, price, size);
-                }
-            }
-        }
-        private void StreamPrizeSizeDeltas(ref Utf8JsonReader reader, ref PriceSize[] prizeSizes)
-        {
-            reader.Read();
-            int i = 0;
-            while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if(reader.TokenType == JsonTokenType.StartArray)
-                {
-                    reader.Read();
-                    double price = reader.GetDouble();
-                    reader.Read();
-                    double size = reader.GetDouble();
-                    prizeSizes[i++] = new PriceSize(price, size);
-                }
-            }
-        }
-
+        
         private void ParseRunnerChanges(ref Utf8JsonReader reader, string? marketId)
         {
             if (marketId == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
@@ -348,9 +189,7 @@ namespace BetfairStreamClient.ExchangeStream
                         else if (reader.ValueTextEquals("bdatl")) { bdatlReader = reader; reader.Read(); reader.Skip(); }
                         else if (reader.ValueTextEquals("batb")) { batbReader = reader; reader.Read(); reader.Skip(); }
                         else if (reader.ValueTextEquals("batl")) { batlReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("atb")) { atbReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("atl")) { atlReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("trd")) { trdReader = reader; reader.Read(); reader.Skip(); }
+                        
                         else
                         {
                             reader.Read();
@@ -372,9 +211,7 @@ namespace BetfairStreamClient.ExchangeStream
                         if (bdatlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatlReader, marketId, selectionId, BetfairLadderType.Bdatl);
                         if (batbReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batbReader,  marketId, selectionId, BetfairLadderType.Batb);
                         if (batlReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batlReader,  marketId, selectionId, BetfairLadderType.Batl);
-                        if (atbReader.TokenType   != JsonTokenType.None) StreamLadderDeltas(ref atbReader,   marketId, selectionId, BetfairLadderType.Atb);
-                        if (atlReader.TokenType   != JsonTokenType.None) StreamLadderDeltas(ref atlReader,   marketId, selectionId, BetfairLadderType.Atl);
-                        if (trdReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref trdReader, marketId, selectionId, BetfairLadderType.Trd);
+                        
                     }
                 }
             }

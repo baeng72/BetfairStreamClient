@@ -2,7 +2,8 @@ BetfairStreamClient/bin/
 BetfairStreamClient/obj/
 StreamClientConsole/bin/
 StreamClientConsole/obj/
-
+BetfairStreamClient.tests/obj/
+BetfairStreamClient.tests/bin/
 
 ## User-specific / Local settings
 .vs/

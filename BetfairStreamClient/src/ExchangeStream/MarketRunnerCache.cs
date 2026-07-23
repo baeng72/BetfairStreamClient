@@ -5,8 +5,8 @@ namespace BetfairStreamClient.ExchangeStream
     public class MarketRunnerCache
     {
         private const int MaxDepth = 20;
-        private readonly PriceSize[][] _ladders = new PriceSize[7][];
-        private readonly int[] _maxLevelsOccupied = new int[7];
+        private readonly PriceSize[][] _ladders = new PriceSize[4][];
+        private readonly int[] _maxLevelsOccupied = new int[4];
         private double LastTradedPrice { get; set; }
         private double TotalVolume { get; set; }
 
@@ -69,8 +69,8 @@ namespace BetfairStreamClient.ExchangeStream
                 BatbCount = batbCount,
                 BestAvailableToLay = RentAndCopy(BetfairLadderType.Batl, out int batlCount),
                 BatlCount = batlCount,
-                Traded = RentAndCopy(BetfairLadderType.Trd, out int trdCount),
-                TradedCount = trdCount,
+                //Traded = RentAndCopy(BetfairLadderType.Trd, out int trdCount),
+                //TradedCount = trdCount,
                 LastTradedPrice = LastTradedPrice,
                 TotalVolume = TotalVolume,
             };

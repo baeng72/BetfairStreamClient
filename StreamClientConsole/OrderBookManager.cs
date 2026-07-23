@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using BetfairStreamClient.Stream;
+using BetfairStreamClient.ExchangeStream;
 namespace StreamClientConsole
 {
     public class OrderBookManager

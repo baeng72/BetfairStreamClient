@@ -1,4 +1,4 @@
-using BetfairStreamClient.Stream;
+
 using System.Buffers;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -11,7 +11,7 @@ namespace BetfairStreamClient.ExchangeStream
 
     public enum BetfairLadderType
     {
-        Bdatb = 0, Bdatl = 1, Batb = 2, Batl = 3, Atb = 4, Atl = 5, Trd = 6
+        Bdatb = 0, Bdatl = 1, Batb = 2, Batl = 3
     }
 
     //public enum OrderSide { Back, Lay }
@@ -77,9 +77,9 @@ namespace BetfairStreamClient.ExchangeStream
         public PriceSize[] BestAvailableToLay { get; init; }
         public int BatlCount { get; init; }
 
-        public PriceSize[] Traded { get; init; }
+        //public PriceSize[] Traded { get; init; }
 
-        public int TradedCount { get; init; }   
+        //public int TradedCount { get; init; }   
 
         public double LastTradedPrice { get; init; }
 
@@ -91,7 +91,7 @@ namespace BetfairStreamClient.ExchangeStream
             if (BestDisplayAvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(BestDisplayAvailableToLay);
             if (BestAvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(BestAvailableToBack);
             if (BestAvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(BestAvailableToLay);
-            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
+            //if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
     }
 

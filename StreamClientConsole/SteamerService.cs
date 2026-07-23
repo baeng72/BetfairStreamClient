@@ -4,7 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using BetfairStreamClient.Betting;
 using BetfairStreamClient.Logging;
-using BetfairStreamClient.Stream;
+using BetfairStreamClient.ExchangeStream;
 
 namespace StreamClientConsole{
 
@@ -114,17 +114,17 @@ namespace StreamClientConsole{
                     var bestLay = SnapshotPriceExtensions.FindBestPrice(runnerSnap.BestAvailableToLay,runnerSnap.BatlCount);
                     var bestBackPrice = 0.0;
                     var bestBackSize = 0.0;
-                    if (bestBack.HasValue)
+                    if (bestBack!=null)
                     {
-                        bestBackPrice = bestBack.Value.Price;
-                        bestBackSize = bestBack.Value.Size;
+                        bestBackPrice = bestBack.Price;
+                        bestBackSize = bestBack.Size;
                     }
                     var bestLayPrice = 0.0;
                     var bestLaySize = 0.0;
-                    if (bestLay.HasValue)
+                    if (bestLay != null)
                     {
-                        bestLayPrice = bestLay.Value.Price;
-                        bestLaySize = bestLay.Value.Size;
+                        bestLayPrice = bestLay.Price;
+                        bestLaySize = bestLay.Size;
                     }
                     if (bestBackPrice <= 1.01 || bestBackPrice >= 20.0) continue;   //can't lay huge prices.
                     

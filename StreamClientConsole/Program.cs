@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using BetfairStreamClient.Auth;
 using BetfairStreamClient.Betting;
-using BetfairStreamClient.Stream;
+using BetfairStreamClient.ExchangeStream;
 using BetfairStreamClient.Logging;
 using System.Threading.Channels;
 using StreamClientConsole;
