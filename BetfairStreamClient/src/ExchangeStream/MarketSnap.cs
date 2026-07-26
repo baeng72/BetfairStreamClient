@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public struct MarketSnap<T> where T : struct, IDisposable, IClearable
+    public struct MarketSnap<T> : IDisposable, IClearable where T : struct, IDisposable, IClearable
     {
         public MarketRunnerSnap<T>[] RunnerPrices { get; init; }
 

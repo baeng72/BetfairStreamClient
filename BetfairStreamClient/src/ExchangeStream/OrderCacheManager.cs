@@ -50,6 +50,28 @@ namespace BetfairStreamClient.ExchangeStream
             notification.Dispose();
         }
 
+        public OrderMarketSnap GetOrderMarketSnap(string marketId)
+        {
+            _markets.TryGetValue(marketId, out var marketCache);
+            int totalRunners = marketCache.RunnerCount;            
+            int index = 0;
+            OrderRunnerSnap[] pooledRunners = ArrayPool<OrderRunnerSnap>.Shared.Rent(totalRunners);
+
+            foreach (var kvp in marketCache.Runners)
+            {
+                // Cast directly to the generic struct (no double casting needed if setup correctly)
+                pooledRunners[index++] = (OrderRunnerSnap)marketCache.ExtractPooledSnapshot(kvp.Key);
+            }
+
+            var snap = new OrderMarketSnap
+            {
+
+                Runners = pooledRunners,
+                RunnerCount = totalRunners
+            };
+            return snap;            
+        }
+
         //    public OrderMarketSnap? GetMarketSnap(string marketId)
         //    {
         //        if (!_orderCache.TryGetValue(marketId, out var runners)) return null;

@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class MarketCacheT<T> where T : struct, IClearable, IDisposable
+    public class MarketCache<T, TSnap> where T : struct, IClearable, IDisposable where TSnap : struct, IDisposable, IClearable
     {
         public string MarketId { get; set; }
         private Dictionary<long, MarketRunner<T>> _runners = new Dictionary<long, MarketRunner<T>>();
         public Dictionary<long, MarketRunner<T>> Runners { get { return _runners; } }
         public int RunnerCount { get { return _runners.Count; } }
-        public MarketCacheT(string marketId)
+        public MarketCache(string marketId)
         {
             MarketId = marketId;
         }
@@ -130,7 +130,7 @@ namespace BetfairStreamClient.ExchangeStream
             copy.CopyTo(buffer);
             return buffer;
         }
-        public MarketRunnerSnap<T> ExtractPooledSnapshot(long selectionId)
+        public MarketRunnerSnap<TSnap> ExtractPooledSnapshot(long selectionId)
         {
             MarketRunner<T> runner = _runners[selectionId];
 
@@ -155,7 +155,7 @@ namespace BetfairStreamClient.ExchangeStream
                     SelectionId = selectionId,
                     RunnerData = snap,
                 };
-                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBdat>, MarketRunnerSnap<T>>(ref result);
+                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBdat>, MarketRunnerSnap<TSnap>>(ref result);
             }
             else if (typeof(T) == typeof(MarketRunnerBat))
             {
@@ -178,7 +178,7 @@ namespace BetfairStreamClient.ExchangeStream
                     SelectionId = selectionId,
                     RunnerData = snap,
                 };
-                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBat>, MarketRunnerSnap<T>>(ref result);
+                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBat>, MarketRunnerSnap<TSnap>>(ref result);
             }
             else if (typeof(T) == typeof(MarketRunnerBatTVLTP))
             {
@@ -203,7 +203,7 @@ namespace BetfairStreamClient.ExchangeStream
                     SelectionId = selectionId,
                     RunnerData = snap,
                 };
-                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBatTVLTP>, MarketRunnerSnap<T>>(ref result);
+                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBatTVLTP>, MarketRunnerSnap<TSnap>>(ref result);
             }
             else if (typeof(T) == typeof(MarketRunnerSnapAt))
             {
@@ -226,7 +226,7 @@ namespace BetfairStreamClient.ExchangeStream
                     SelectionId = selectionId,
                     RunnerData = snap,
                 };
-                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapAt>, MarketRunnerSnap<T>>(ref result);
+                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapAt>, MarketRunnerSnap<TSnap>>(ref result);
             }
 
             throw new InvalidOperationException();

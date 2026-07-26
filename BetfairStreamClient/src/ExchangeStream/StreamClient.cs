@@ -20,7 +20,7 @@ using BetfairStreamClient.Logging;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class StreamClient<T> where T : struct, IDisposable, IClearable
+    public class StreamClient<T, TSnap> where T : struct, IDisposable, IClearable where TSnap : struct, IDisposable, IClearable
     {
         private readonly string _host;
         private readonly int _port;
@@ -38,8 +38,8 @@ namespace BetfairStreamClient.ExchangeStream
         private readonly ArrayPool<byte> _pool = ArrayPool<byte>.Shared;
         private readonly Channel<(byte[] Buffer, int Length)> _messageChannel = Channel.CreateUnbounded<(byte[], int)>(
             new UnboundedChannelOptions { SingleWriter = true, SingleReader = true });
-        private readonly StreamParser<T> _streamParser;
-        private readonly MarketCacheManager<T> _marketCache;
+        private readonly StreamParser<T, TSnap> _streamParser;
+        private readonly MarketCacheManager<T, TSnap> _marketCache;
         private readonly OrderCacheManager _orderCache;
 
         private readonly ITransportConnection _transportConnection;  //Abstracted connection layer
@@ -57,9 +57,9 @@ namespace BetfairStreamClient.ExchangeStream
             Logger logger,
             RawStreamDumper streamDumper,
             ITransportConnection? transportConnection = null,
-            MarketCacheManager<T>? marketCache = null,
+            MarketCacheManager<T, TSnap>? marketCache = null,
             OrderCacheManager? orderCache = null,
-            StreamParser<T>? streamParser = null)
+            StreamParser<T, TSnap>? streamParser = null)
         {
             _host = host;
             _port = port;
@@ -69,15 +69,15 @@ namespace BetfairStreamClient.ExchangeStream
             _streamDumper = streamDumper;
             //Fallback to real production instnces if mocks/stubs aren't provided
             _transportConnection = transportConnection ?? new BetfairTransportConnection();
-            _marketCache = marketCache ?? new MarketCacheManager<T>();
+            _marketCache = marketCache ?? new MarketCacheManager<T, TSnap>();
             _orderCache = orderCache ?? new OrderCacheManager();
-            _streamParser = streamParser ?? new StreamParser<T>(_marketCache, _orderCache, logger);
+            _streamParser = streamParser ?? new StreamParser<T, TSnap>(_marketCache, _orderCache, logger);
             _nextId = 0;
         }
 
         public int NextId() => Interlocked.Increment(ref _nextId);
 
-        public MarketCacheManager<T> MarketCacheManager => _marketCache;
+        public MarketCacheManager<T, TSnap> MarketCacheManager => _marketCache;
         public OrderCacheManager OrderCacheManager => _orderCache;
 
         public async Task ConnectAndAuthenticateAsync(CancellationToken cancellationToken)

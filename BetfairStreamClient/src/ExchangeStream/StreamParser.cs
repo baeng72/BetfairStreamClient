@@ -7,15 +7,15 @@ using BetfairStreamClient.Logging;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class StreamParser<T> where T : struct, IDisposable, IClearable
+    public class StreamParser<T, TSnap> where T : struct, IDisposable, IClearable where TSnap : struct, IDisposable, IClearable
     {
-        private readonly MarketCacheManager<T> _marketCacheManager;
+        private readonly MarketCacheManager<T,TSnap> _marketCacheManager;
         private readonly OrderCacheManager _orderCacheManager;
 
         private readonly Logger _logger;
         private DateTime _lastHeartbeat;
 
-        public StreamParser(MarketCacheManager<T> marketCacheManager, OrderCacheManager orderCacheManager, Logger logger)
+        public StreamParser(MarketCacheManager<T, TSnap> marketCacheManager, OrderCacheManager orderCacheManager, Logger logger)
         {
             _marketCacheManager = marketCacheManager;
             _orderCacheManager = orderCacheManager;
@@ -153,7 +153,7 @@ namespace BetfairStreamClient.ExchangeStream
             }
         }
 
-        private void ParseRunnerChanges(ref Utf8JsonReader reader, MarketCacheT<T> marketCache, DateTime timeStamp)
+        private void ParseRunnerChanges(ref Utf8JsonReader reader, MarketCache<T, TSnap> marketCache, DateTime timeStamp)
         {
             if (marketCache == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)

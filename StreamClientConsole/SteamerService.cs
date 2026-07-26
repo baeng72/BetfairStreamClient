@@ -8,9 +8,9 @@ using BetfairStreamClient.ExchangeStream;
 
 namespace StreamClientConsole{
 
-    public class SteamerService<T> : IDisposable where T : struct, IDisposable, IClearable
+    public class SteamerService<T, TSnap> : IDisposable where T : struct, IDisposable, IClearable where TSnap : struct, IDisposable, IClearable
     {
-        private readonly StreamClient<T> _streamClient;
+        private readonly StreamClient<T, TSnap> _streamClient;
 
         private readonly BettingClient _bettingClient;
 
@@ -33,7 +33,7 @@ namespace StreamClientConsole{
 
         private readonly PendingLayMonitor _pendingLayMonitor;
 
-        public SteamerService(BettingClient bettingClient, StreamClient<T> streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
+        public SteamerService(BettingClient bettingClient, StreamClient<T, TSnap> streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
         {
             _bettingClient = bettingClient ?? throw new ArgumentNullException();
             _streamClient = streamClient ?? throw new ArgumentNullException();
@@ -100,11 +100,11 @@ namespace StreamClientConsole{
         //    }
         //}
 
-        public void OnMarketPriceUpdate(object? sender, MarketChangeNotification<T> notification)
+        public void OnMarketPriceUpdate(object? sender, MarketChangeNotification<TSnap> notification)
         {
             //using(market)    //cleanly returns arrays to the pool at the end of the block
             {
-                MarketSnap<MarketRunnerBatTVLTP> marketSnap = (MarketSnap<MarketRunnerBatTVLTP>)(object)notification.MarketSnap;
+                MarketSnap<MarketRunnerSnapBatTVLTP> marketSnap = (MarketSnap<MarketRunnerSnapBatTVLTP>)(object)notification.MarketSnap;
                 
                 string marketId = notification.MarketId;
                 DateTime scheduledOff = DateTime.MinValue;
