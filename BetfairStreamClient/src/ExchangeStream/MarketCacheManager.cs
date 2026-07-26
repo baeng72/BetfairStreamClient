@@ -6,82 +6,53 @@ namespace BetfairStreamClient.ExchangeStream
 {
 
 
-    public class MarketCacheManager
+    public class MarketCacheManager<T> where T : struct, IDisposable, IClearable
     {
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, MarketRunnerCache>> _marketCache = new();
-        private readonly ConcurrentDictionary<string, MarketDefinition> _marketDefinitions = new();
-        public event EventHandler<MarketChangeNotification>? MarketNotificationReceived;
-        
-
-        public MarketRunnerCache GetOrCreateRunnerCache(string marketId, long selectionId)
+        private readonly ConcurrentDictionary<string, MarketCacheT<T>> _markets = new ConcurrentDictionary<string, MarketCacheT<T>>();
+        public event EventHandler<MarketChangeNotification<T>>? MarketNotificationReceived;
+        public MarketCacheT<T> GetOrCreateMarket(string marketId)
         {
-            if (selectionId == 0)
-            {
-                int x = 0;
-            }
-            var runnersInMarket = _marketCache.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, MarketRunnerCache>());
-            return runnersInMarket.GetOrAdd(selectionId, _ => new MarketRunnerCache());
+            var marketCache = _markets.GetOrAdd(marketId, _ => new MarketCacheT<T>(marketId));
+            return marketCache;
         }
-
-        public void ClearCacheForMarket(string marketId)
+        public void Clear()
         {
-            if (_marketCache.TryRemove(marketId, out var runnersInMarket))
-            {
-                runnersInMarket.Clear();
-            }
+            _markets.Clear();
         }
-
-        
-        public void ProcessAndBroadcast(string marketId, MarketDefinition? definition)
+        public void ProcessAndBroadcast(string marketId, DateTime timeStamp, MarketDefinition? definition)
         {
-            if (!_marketCache.TryGetValue(marketId, out var runnersInMarket)) return;
-            if (definition != null)
-            {
-                _marketDefinitions[marketId] = definition;
-            }
-            int totalRunners = runnersInMarket.Count;
+            if (!_markets.TryGetValue(marketId, out var marketCache)) return;
+
+            int totalRunners = marketCache.RunnerCount;
             if (totalRunners == 0) return;
-
-            RunnerSnap[] pooledRunners = ArrayPool<RunnerSnap>.Shared.Rent(totalRunners);
             int index = 0;
-            foreach (var kvp in runnersInMarket)
+            MarketRunnerSnap<T>[] pooledRunners = ArrayPool<MarketRunnerSnap<T>>.Shared.Rent(totalRunners);
+
+            foreach (var kvp in marketCache.Runners)
             {
-                pooledRunners[index++] = kvp.Value.ExtractPooledSnapshot(kvp.Key);
+                // Cast directly to the generic struct (no double casting needed if setup correctly)
+                pooledRunners[index++] = (MarketRunnerSnap<T>)marketCache.ExtractPooledSnapshot(kvp.Key);
             }
 
-            var notification = new MarketChangeNotification
+            // Create the notification directly with T
+            var notification = new MarketChangeNotification<T>
             {
                 MarketId = marketId,
                 MarketDefinition = definition,
-                PriceSnapshot = new MarketSnap { MarketId = marketId, Timestamp = DateTime.UtcNow, Runners = pooledRunners, RunnerCount = totalRunners }
+                Timestamp = timeStamp,
+                MarketSnap = new MarketSnap<T> { RunnerPrices = pooledRunners, RunnerCount = totalRunners},                
             };
 
+            // Clean, allocation-free execution without boxing/casting tricks
             MarketNotificationReceived?.Invoke(this, notification);
+            notification.Dispose();
         }
 
-        public MarketSnap? GetMarketSnap(string marketId)
-        {
-            if (!_marketCache.TryGetValue(marketId, out var runnersInMarket)) return null;
-            int totalRunners = runnersInMarket.Count;
-            if (totalRunners == 0) return null;
+        
 
-            RunnerSnap[] pooledRunners = ArrayPool<RunnerSnap>.Shared.Rent(totalRunners);
-            int index = 0;
-            foreach (var kvp in runnersInMarket)
-            {
-                pooledRunners[index++] = kvp.Value.ExtractPooledSnapshot(kvp.Key);
-            }
+        public void Dispose() { }
 
-            return new MarketSnap { MarketId = marketId, Timestamp = DateTime.UtcNow, Runners = pooledRunners, RunnerCount = totalRunners };
-        }
-
-        public MarketDefinition? GetMarketDefinition(string marketId)
-        {
-            if(!_marketDefinitions.TryGetValue(marketId, out var definition)) return null;
-            return definition;
-        }
     }
 
-    
 }
 

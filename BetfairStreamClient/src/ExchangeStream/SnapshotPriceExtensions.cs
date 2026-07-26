@@ -2,7 +2,7 @@ namespace BetfairStreamClient.ExchangeStream
 {
     public static class SnapshotPriceExtensions
     {
-        public static PriceSize? FindBestPrice(PriceSize[] rentedLadder, int activeCount)
+        public static PriceSizeDelta? FindBestPrice(PriceSizeDelta[] rentedLadder, int activeCount)
         {
             //If the cache reported no active levels, it's completly empty.
             if(activeCount==0 || rentedLadder == null)return null;

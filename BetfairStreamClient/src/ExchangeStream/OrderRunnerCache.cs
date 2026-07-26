@@ -4,80 +4,47 @@ using System.Runtime.Serialization;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-public class OrderRunnerCache
+    public struct OrderRunnerCache : IDisposable, IClearable
     {
-        private const int MaxActiveOrdersPerRunner = 100;
-        private const int MaxMatched = 20;
-        private readonly OrderSnap[] _orders = new OrderSnap[MaxActiveOrdersPerRunner];
-        private readonly PriceSize[] _matchedBacks = new PriceSize[MaxMatched];
-        private readonly PriceSize[] _matchedLays = new PriceSize[MaxMatched];
-        public int MatchedBackCount { get; private set; } = 0;
-        public int MatchedLayCount { get; private set; } = 0;
-        public int ActiveCount { get; private set; } = 0;
-
-        public void ResetMatchedCount()
+        private const int MaxOrderCount = 20;
+        private const int MaxBetCount = 20;
+        public long SelectionId;
+        public Order[] UnmatchedOrders;
+        public int UnmatchedOrdersCount;
+        public PriceSizeDelta[] MatchedBacks;
+        public int MatchedBacksCount;
+        public PriceSizeDelta[] MatchedLays;
+        public int MatchedLaysCount;
+        public OrderRunnerCache(long selectionId)
         {
-            MatchedBackCount = MatchedLayCount = 0;
+            SelectionId = selectionId;
+            UnmatchedOrders = new Order[MaxOrderCount];
+            MatchedBacks = new PriceSizeDelta[MaxOrderCount];
+            MatchedLays = new PriceSizeDelta[MaxBetCount];
         }
 
-        public void UpdateMatchedBack(double price, double size)
+        public void AddOrder(Order order)
         {
-            _matchedBacks[MatchedBackCount++] = new PriceSize(price, size);
-            
-        }
-        public void UpdateMatchedLay(double price, double size)
-        {
-            _matchedLays[MatchedLayCount++] = new PriceSize(price, size);
+            UnmatchedOrders[UnmatchedOrdersCount++] = order;
         }
 
-        public void UpdateOrAddOrder(long betId, double price, double sizeRemaining, double sizeMatched, double sizeVoid, SideEnum side, StatusEnum status, PtEnum persistence, OtEnum type)
+        public void AddMatchedBacks(double price, double size)
         {
-            int matchIndex = -1;
-
-            // Fast sequential span scan over localized primitives
-            for (int i = 0; i < ActiveCount; i++)
-            {
-                if (_orders[i].BetId == betId)
-                {
-                    matchIndex = i;
-                    break;
-                }
-            }
-
-            // Determine status changes
-            
-
-            if (matchIndex != -1)
-            {
-                if (status == StatusEnum.EXECUTION_COMPLETE)
-                {
-                    // Order closed: swap the last active slot into this position to maintain array density
-                    _orders[matchIndex] = _orders[ActiveCount - 1];
-                    _orders[ActiveCount - 1] = default;
-                    ActiveCount--;
-                }
-                else
-                {
-                    // Inline memory struct update
-                    _orders[matchIndex] = new OrderSnap(betId, price, sizeRemaining, sizeMatched, side, status);
-                }
-            }
-            else if (status != StatusEnum.EXECUTION_COMPLETE && ActiveCount < MaxActiveOrdersPerRunner)
-            {
-                // Register brand new order
-                _orders[ActiveCount++] = new OrderSnap(betId, price, sizeRemaining, sizeMatched, side, status);
-            }
+            MatchedBacks[MatchedBacksCount++] = new PriceSizeDelta(price, size);
+        }
+        public void AddMatchedLays(double price, double size)
+        {
+            MatchedLays[MatchedLaysCount++] = new PriceSizeDelta((double)price, size);
+        }
+        public void Clear()
+        {
+            UnmatchedOrdersCount = 0;
+            MatchedBacksCount = 0;
+            MatchedLaysCount = 0;
         }
 
-        public int CopyActiveOrdersTo(OrderSnap[] destination, int startIndex)
+        public void Dispose()
         {
-            for (int i = 0; i < ActiveCount; i++)
-            {
-                destination[startIndex++] = _orders[i];
-            }
-            return startIndex;
         }
-
-        
     }
 }
