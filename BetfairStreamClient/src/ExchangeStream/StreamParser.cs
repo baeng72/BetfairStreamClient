@@ -54,6 +54,7 @@ namespace BetfairStreamClient.ExchangeStream
                     }
                     else if (reader.ValueTextEquals("pt"u8))
                     {
+                        reader.Read();
                         timeStamp = convertUnixToDateTime(reader.GetInt64());
                     }
                 }
@@ -562,12 +563,9 @@ namespace BetfairStreamClient.ExchangeStream
             //reader.Read();
             var runnerCache = marketCache.GetOrCreateRunnerCache(marketId, selectionId);
             Span<byte> betIdFallbackBuffer = stackalloc byte[32];
-            List<JsonTokenType> tokens = new List<JsonTokenType>();
-            List<string> values = new List<string>();
+            
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
-                tokens.Add(reader.TokenType);
-                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                 if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
                 {
                     string betId = ""; string rfo = ""; string rfs = "";
@@ -581,8 +579,7 @@ namespace BetfairStreamClient.ExchangeStream
                     DateTime matchedDate = DateTime.MinValue;
                     DateTime cancelledDate = DateTime.MinValue;
                     DateTime placedDate = DateTime.MinValue;
-                    tokens.Add(reader.TokenType);
-                    values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
+                    
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                     {
 
@@ -593,8 +590,6 @@ namespace BetfairStreamClient.ExchangeStream
                             if (reader.ValueTextEquals("id"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 if (reader.HasValueSequence)
                                 {
                                     reader.ValueSequence.CopyTo(betIdFallbackBuffer);
@@ -611,64 +606,47 @@ namespace BetfairStreamClient.ExchangeStream
                             else if (reader.ValueTextEquals("s"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 s = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("p"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 p = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("sr"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 sr = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("sm"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 sm = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("sv"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 sv = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("sl"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 sl = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("sc"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 sc = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("avp"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 avp = reader.GetDouble();
                             }
                             else if (reader.ValueTextEquals("pt"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
+                                
                                 var val = reader.GetString();
                                 switch (val)
                                 {
@@ -686,8 +664,6 @@ namespace BetfairStreamClient.ExchangeStream
                             else if (reader.ValueTextEquals("ot"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 var val = reader.GetString();
                                 switch (val)
                                 {
@@ -706,8 +682,6 @@ namespace BetfairStreamClient.ExchangeStream
                             else if (reader.ValueTextEquals("side"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 var val = reader.GetString();
                                 switch (val)
                                 {
@@ -722,8 +696,6 @@ namespace BetfairStreamClient.ExchangeStream
                             else if (reader.ValueTextEquals("status"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 var val = reader.GetString();
                                 switch (val)
                                 {
@@ -738,43 +710,31 @@ namespace BetfairStreamClient.ExchangeStream
                             else if (reader.ValueTextEquals("rfo"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 rfo = reader.GetString();
                             }
                             else if (reader.ValueTextEquals("rfs"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 rfs = reader.GetString();
                             }
                             else if (reader.ValueTextEquals("cd"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 cancelledDate = convertUnixToDateTime(reader.GetInt64());
                             }
                             else if (reader.ValueTextEquals("md"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 matchedDate = convertUnixToDateTime(reader.GetInt64());
                             }
                             else if (reader.ValueTextEquals("pd"u8))
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 placedDate = convertUnixToDateTime(reader.GetInt64());
                             }
                             else
                             {
                                 reader.Read();
-                                tokens.Add(reader.TokenType);
-                                values.Add(reader.TokenType == JsonTokenType.PropertyName ? reader.GetString() : "");
                                 reader.Skip();
                             }
 
