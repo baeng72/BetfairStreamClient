@@ -205,6 +205,34 @@ namespace BetfairStreamClient.ExchangeStream
                 };
                 return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBatTVLTP>, MarketRunnerSnap<TSnap>>(ref result);
             }
+            else if (typeof(T) == typeof(MarketRunnerBatTradedTVLTP))
+            {
+                var target = (MarketRunner<MarketRunnerBatTradedTVLTP>)(object)runner;
+                ref MarketRunnerBatTradedTVLTP marketRunner = ref target.RunnerData;
+                int bdatbCount = 0;
+                LevelDelta[] bdatb = RentAndCopy(marketRunner.BestAvailableToBack, out bdatbCount);
+                int bdatlCount = 0;
+                LevelDelta[] bdatl = RentAndCopy(marketRunner.BestAvailableToLay, out bdatlCount);
+                int tradedCount = 0;
+                PriceSizeDelta[] traded = RentAndCopy(marketRunner.Traded, out tradedCount);
+                MarketRunnerSnapBatTradedTVLTP snap = new MarketRunnerSnapBatTradedTVLTP
+                {
+                    BestAvailableToBack = bdatb,
+                    BestAvailableToLay = bdatl,
+                    BestAvailableToBackCount = bdatbCount,
+                    BestAvailableToLayCount = bdatlCount,
+                    TradedVolume = marketRunner.TradedVolume,
+                    LastTradedPrice = marketRunner.LastTradedPrice,
+                    Traded = marketRunner.Traded,
+                    TradedCount = tradedCount
+                };
+                var result = new MarketRunnerSnap<MarketRunnerSnapBatTradedTVLTP>
+                {
+                    SelectionId = selectionId,
+                    RunnerData = snap,
+                };
+                return Unsafe.As<MarketRunnerSnap<MarketRunnerSnapBatTradedTVLTP>, MarketRunnerSnap<TSnap>>(ref result);
+            }
             else if (typeof(T) == typeof(MarketRunnerSnapAt))
             {
                 var target = (MarketRunner<MarketRunnerAt>)(object)runner;
