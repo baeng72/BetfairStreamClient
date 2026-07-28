@@ -3,6 +3,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,12 +22,19 @@ namespace BetfairStreamClient.ExchangeStream
             MarketId = marketId;
         }
 
-        public OrderRunnerCache GetOrCreateRunnerCache(string marketId, long selectionId)
+        public ref OrderRunnerCache GetOrCreateRunnerCache(string marketId, long selectionId)
         {
-            if (_runners.TryGetValue(selectionId, out var runner)) return runner;
-            runner = new OrderRunnerCache(selectionId);
-            _runners[selectionId] = runner;
-            return runner;
+            ref OrderRunnerCache runner = ref CollectionsMarshal.GetValueRefOrAddDefault(_runners, selectionId, out bool exists);
+            
+            if (!exists)
+            {
+                runner = new OrderRunnerCache(selectionId);
+                _runners[selectionId] = runner;
+            }
+            //if (_runners.TryGetValue(selectionId, out var runner)) return runner;
+            //runner = new OrderRunnerCache(selectionId);
+            //_runners[selectionId] = runner;
+            return ref runner;
         }
 
         private Order[] RentAndCopy(Order[] orders, out int count)
@@ -38,12 +46,12 @@ namespace BetfairStreamClient.ExchangeStream
             copy.CopyTo(buffer);
             return buffer;
         }
-        private PriceSizeDelta[] RentAndCopy(PriceSizeDelta[] orders, out int count)
+        private PriceSize[] RentAndCopy(PriceSize[] orders, out int count)
         {
-            ReadOnlySpan<PriceSizeDelta> copy = orders.Length > 0 ? orders.AsSpan(0, orders.Length) : ReadOnlySpan<PriceSizeDelta>.Empty;
+            ReadOnlySpan<PriceSize> copy = orders.Length > 0 ? orders.AsSpan(0, orders.Length) : ReadOnlySpan<PriceSize>.Empty;
             count = orders.Length;
-            if (count == 0) return Array.Empty<PriceSizeDelta>();
-            PriceSizeDelta[] buffer = ArrayPool<PriceSizeDelta>.Shared.Rent(count);
+            if (count == 0) return Array.Empty<PriceSize>();
+            PriceSize[] buffer = ArrayPool<PriceSize>.Shared.Rent(count);
             copy.CopyTo(buffer);
             return buffer;
         }
@@ -59,11 +67,11 @@ namespace BetfairStreamClient.ExchangeStream
             return new OrderRunnerSnap{
                 SelectionId=selectionId,
                 UnmatchedOrders = orders,
-                UnmatchedOrderCount=orderCount,
+                UnmatchedOrderCount=runner.UnmatchedOrdersCount,
                 MatchedBacks=matchedBacks,
-                MatchedBacksCount=matchedBacksCount,
+                MatchedBacksCount=runner.MatchedBacksCount,
                 MatchedLays=matchedLays,
-                MatchedLaysCount=matchedLaysCount
+                MatchedLaysCount=runner.MatchedLaysCount
             };
         }
         public void Clear()

@@ -11,16 +11,16 @@ namespace BetfairStreamClient.ExchangeStream
         public long SelectionId;
         public Order[] UnmatchedOrders;
         public int UnmatchedOrdersCount;
-        public PriceSizeDelta[] MatchedBacks;
+        public PriceSize[] MatchedBacks;
         public int MatchedBacksCount;
-        public PriceSizeDelta[] MatchedLays;
+        public PriceSize[] MatchedLays;
         public int MatchedLaysCount;
         public OrderRunnerCache(long selectionId)
         {
             SelectionId = selectionId;
             UnmatchedOrders = new Order[MaxOrderCount];
-            MatchedBacks = new PriceSizeDelta[MaxOrderCount];
-            MatchedLays = new PriceSizeDelta[MaxBetCount];
+            MatchedBacks = new PriceSize[MaxOrderCount];
+            MatchedLays = new PriceSize[MaxBetCount];
         }
 
         public void AddOrder(Order order)
@@ -30,11 +30,11 @@ namespace BetfairStreamClient.ExchangeStream
 
         public void AddMatchedBacks(double price, double size)
         {
-            MatchedBacks[MatchedBacksCount++] = new PriceSizeDelta(price, size);
+            MatchedBacks[MatchedBacksCount++] = new PriceSize(price, size);
         }
         public void AddMatchedLays(double price, double size)
         {
-            MatchedLays[MatchedLaysCount++] = new PriceSizeDelta((double)price, size);
+            MatchedLays[MatchedLaysCount++] = new PriceSize((double)price, size);
         }
         public void Clear()
         {

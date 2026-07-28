@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetfairStreamClient", "Betf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamClientConsole", "StreamClientConsole\StreamClientConsole.csproj", "{82062898-0577-427D-A300-9A5CD2A3047E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetfairStreamClient.tests", "BetfairStreamClient.tests\BetfairStreamClient.tests.csproj", "{BC902C38-1867-1D71-4C2F-21D8147D5DCD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{82062898-0577-427D-A300-9A5CD2A3047E}.Release|x64.Build.0 = Release|Any CPU
 		{82062898-0577-427D-A300-9A5CD2A3047E}.Release|x86.ActiveCfg = Release|Any CPU
 		{82062898-0577-427D-A300-9A5CD2A3047E}.Release|x86.Build.0 = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|x64.Build.0 = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Debug|x86.Build.0 = Debug|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|x64.ActiveCfg = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|x64.Build.0 = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|x86.ActiveCfg = Release|Any CPU
+		{BC902C38-1867-1D71-4C2F-21D8147D5DCD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

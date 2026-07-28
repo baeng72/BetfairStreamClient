@@ -12,9 +12,9 @@ namespace BetfairStreamClient.ExchangeStream
         public long SelectionId;
         public Order[] UnmatchedOrders;
         public int UnmatchedOrderCount;
-        public PriceSizeDelta[] MatchedBacks;
+        public PriceSize[] MatchedBacks;
         public int MatchedBacksCount;
-        public PriceSizeDelta[] MatchedLays;
+        public PriceSize[] MatchedLays;
         public int MatchedLaysCount;
 
         public void Dispose()
@@ -25,11 +25,11 @@ namespace BetfairStreamClient.ExchangeStream
             }
             if (MatchedBacks != null)
             {
-                ArrayPool<PriceSizeDelta>.Shared.Return(MatchedBacks);
+                ArrayPool<PriceSize>.Shared.Return(MatchedBacks);
             }
             if (MatchedLays != null)
             {
-                ArrayPool<PriceSizeDelta>.Shared.Return(MatchedLays);
+                ArrayPool<PriceSize>.Shared.Return(MatchedLays);
             }
         }
 

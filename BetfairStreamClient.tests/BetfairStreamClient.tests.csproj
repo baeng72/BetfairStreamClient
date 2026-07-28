@@ -22,5 +22,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
+	<ItemGroup>
+		<!-- Forces the compiler to copy the json file to the bin output folder -->
+		<None Update="1_258926623.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 namespace BetfairStreamClient.ExchangeStream
 {
-    public readonly struct LevelDelta
+public readonly struct LevelDelta
 {
     public int Level { get; }
     public double Price { get; }
@@ -12,5 +12,6 @@ namespace BetfairStreamClient.ExchangeStream
         Price = price;
         Size = size;
     }
-}
+       
+    }
 }

@@ -49,14 +49,14 @@ namespace BetfairStreamClient.ExchangeStream
 
     public struct MarketRunnerSnapAt : IDisposable, IClearable
     {
-        public PriceSizeDelta[] AvailableToBack;
-        public PriceSizeDelta[] AvailableToLay;
+        public PriceSize[] AvailableToBack;
+        public PriceSize[] AvailableToLay;
         public int AvailableToBackCount;
         public int AvailableToLayCount;
         public void Dispose()
         {
-            if (AvailableToBack != null) ArrayPool<PriceSizeDelta>.Shared.Return(AvailableToBack);
-            if (AvailableToLay != null) ArrayPool<PriceSizeDelta>.Shared.Return(AvailableToLay);
+            if (AvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(AvailableToBack);
+            if (AvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(AvailableToLay);
         }
         public void Clear() { }
     }
@@ -76,11 +76,11 @@ namespace BetfairStreamClient.ExchangeStream
     }
     public struct MarketRunnerSnapTraded : IDisposable, IClearable
     {
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public void Dispose()
         {
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear() { TradedCount = 0; }
     }
@@ -91,13 +91,13 @@ namespace BetfairStreamClient.ExchangeStream
         public LevelDelta[] BestDisplayAvailableToLay;
         public int BestDisplayAvailableToBackCount;
         public int BestDisplayAvailableToLayCount;
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public void Dispose()
         {
             if (BestDisplayAvailableToBack != null) ArrayPool<LevelDelta>.Shared.Return(BestDisplayAvailableToBack);
             if (BestDisplayAvailableToLay != null) ArrayPool<LevelDelta>.Shared.Return(BestDisplayAvailableToLay);
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear()
         {
@@ -111,13 +111,13 @@ namespace BetfairStreamClient.ExchangeStream
         public LevelDelta[] BestAvailableToLay;
         public int BestAvailableToBackCount;
         public int BestAvailableToLayCount;
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public void Dispose()
         {
             if (BestAvailableToBack != null) ArrayPool<LevelDelta>.Shared.Return(BestAvailableToBack);
             if (BestAvailableToLay != null) ArrayPool<LevelDelta>.Shared.Return(BestAvailableToLay);
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear()
         {
@@ -127,17 +127,17 @@ namespace BetfairStreamClient.ExchangeStream
 
     public struct MarketRunnerSnapAtTraded : IDisposable, IClearable
     {
-        public PriceSizeDelta[] AvailableToBack;
-        public PriceSizeDelta[] AvailableToLay;
+        public PriceSize[] AvailableToBack;
+        public PriceSize[] AvailableToLay;
         public int AvailableToBackCount;
         public int AvailableToLayCount;
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public void Dispose()
         {
-            if (AvailableToBack != null) ArrayPool<PriceSizeDelta>.Shared.Return(AvailableToBack);
-            if (AvailableToLay != null) ArrayPool<PriceSizeDelta>.Shared.Return(AvailableToLay);
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (AvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(AvailableToBack);
+            if (AvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(AvailableToLay);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear()
         {
@@ -171,7 +171,7 @@ namespace BetfairStreamClient.ExchangeStream
         public LevelDelta[] BestDisplayAvailableToLay;
         public int BestDisplayAvailableToBackCount;
         public int BestDisplayAvailableToLayCount;
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public double TradedVolume { get; set; }
         public double LastTradedPrice { get; set; }
@@ -179,7 +179,7 @@ namespace BetfairStreamClient.ExchangeStream
         {
             if (BestDisplayAvailableToBack != null) ArrayPool<LevelDelta>.Shared.Return(BestDisplayAvailableToBack);
             if (BestDisplayAvailableToLay != null) ArrayPool<LevelDelta>.Shared.Return(BestDisplayAvailableToLay);
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear()
         {
@@ -214,7 +214,7 @@ namespace BetfairStreamClient.ExchangeStream
         public LevelDelta[] BestAvailableToLay;
         public int BestAvailableToBackCount;
         public int BestAvailableToLayCount;
-        public PriceSizeDelta[] Traded;
+        public PriceSize[] Traded;
         public int TradedCount;
         public double TradedVolume { get; set; }
         public double LastTradedPrice { get; set; }
@@ -222,11 +222,34 @@ namespace BetfairStreamClient.ExchangeStream
         {
             if (BestAvailableToBack != null) ArrayPool<LevelDelta>.Shared.Return(BestAvailableToBack);
             if (BestAvailableToLay != null) ArrayPool<LevelDelta>.Shared.Return(BestAvailableToLay);
-            if (Traded != null) ArrayPool<PriceSizeDelta>.Shared.Return(Traded);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
         }
         public void Clear()
         {
             BestAvailableToBackCount = BestAvailableToLayCount = TradedCount = 0;
+            LastTradedPrice = TradedVolume = 0.0;
+        }
+    }
+
+    public struct MarketRunnerSnapAtTradedTVLTP : IDisposable, IClearable
+    {
+        public PriceSize[] AvailableToBack;
+        public PriceSize[] AvailableToLay;
+        public int AvailableToBackCount;
+        public int AvailableToLayCount;
+        public PriceSize[] Traded;
+        public int TradedCount;
+        public double TradedVolume { get; set; }
+        public double LastTradedPrice { get; set; }
+        public void Dispose()
+        {
+            if (AvailableToBack != null) ArrayPool<PriceSize>.Shared.Return(AvailableToBack);
+            if (AvailableToLay != null) ArrayPool<PriceSize>.Shared.Return(AvailableToLay);
+            if (Traded != null) ArrayPool<PriceSize>.Shared.Return(Traded);
+        }
+        public void Clear()
+        {
+            AvailableToBackCount = AvailableToLayCount = TradedCount = 0;
             LastTradedPrice = TradedVolume = 0.0;
         }
     }
