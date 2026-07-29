@@ -1,24 +1,27 @@
+using BetfairStreamClient.Logging;
+using System;
 using System.Buffers;
 using System.Buffers.Text;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Transactions;
-using BetfairStreamClient.Logging;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class StreamParser
+    public class StreamParser<T, TSnap> where T : struct, IDisposable, IClearable where TSnap : struct, IDisposable, IClearable
     {
-        private readonly MarketCacheManager _marketCache;
-        private readonly OrderCacheManager _orderCache;
+        private readonly MarketCacheManager<T,TSnap> _marketCacheManager;
+        private readonly OrderCacheManager _orderCacheManager;
 
         private readonly Logger _logger;
         private DateTime _lastHeartbeat;
 
-        public StreamParser(MarketCacheManager market, OrderCacheManager order, Logger logger)
+        public StreamParser(MarketCacheManager<T, TSnap> marketCacheManager, OrderCacheManager orderCacheManager, Logger logger)
         {
-            _marketCache = market;
-            _orderCache = order;
+            _marketCacheManager = marketCacheManager;
+            _orderCacheManager = orderCacheManager;
             _logger = logger;
         }
 
@@ -26,38 +29,45 @@ namespace BetfairStreamClient.ExchangeStream
         {
             var reader = new Utf8JsonReader(bytes.AsSpan(0, length));
             bool isOrderMessage = false;
-
+            DateTime timeStamp = DateTime.UtcNow;
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    if (reader.ValueTextEquals("op"))
+                    string propName = reader.GetString();
+                    if (reader.ValueTextEquals("op"u8))
                     {
                         reader.Read();
-                        if (reader.ValueTextEquals("ct")) { _lastHeartbeat = DateTime.UtcNow; return; }
-                        if (reader.ValueTextEquals("ocm")) 
+                        if (reader.ValueTextEquals("ct"u8)) { _lastHeartbeat = DateTime.UtcNow; return; }
+                        if (reader.ValueTextEquals("ocm"u8)) 
                             isOrderMessage = true;
-                        if (reader.ValueTextEquals("status"))
+                        if (reader.ValueTextEquals("status"u8))
                         {
                             var statusReader = new Utf8JsonReader(bytes.AsSpan(0, length));
                             ParseAndLogStatusMessage(ref statusReader);
                             return; 
                         }
                     }
-                    else if (reader.ValueTextEquals("mc") && !isOrderMessage)
+                    else if (reader.ValueTextEquals("mc"u8) && !isOrderMessage)
                     {
-                        ParseMarketChangesArray(ref reader);
+                        ParseMarketChangesArray(ref reader, timeStamp);
                     }
-                    else if (reader.ValueTextEquals("oc") && isOrderMessage)
+                    else if (reader.ValueTextEquals("oc"u8) && isOrderMessage)
                     {
-                        ParseOrderChangesArray(ref reader);
+                        ParseOrderChangesArray(ref reader, timeStamp);
+                    }
+                    else if (reader.ValueTextEquals("pt"u8))
+                    {
+                        reader.Read();
+                        if (reader.TokenType != JsonTokenType.Null)
+                            timeStamp = convertUnixToDateTime(reader.GetInt64());
                     }
                 }
             }
         }
-        private void ParseMarketChangesArray(ref Utf8JsonReader reader)
+        private void ParseMarketChangesArray(ref Utf8JsonReader reader, DateTime timeStamp)
         {
-            reader.Read(); 
+            reader.Read();
             if (reader.TokenType != JsonTokenType.StartArray) return;
 
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -68,7 +78,7 @@ namespace BetfairStreamClient.ExchangeStream
                     bool hasPriceChanges = false;
                     bool isImageLoop = false; // Track image status first
                     MarketDefinition? freshDefinition = null;
-
+                    double totalVolume = 0.0;                    
                     // We must capture the raw unparsed reader window for 'rc' 
                     // because 'rc' might appear BEFORE we know if it's an image loop.
                     Utf8JsonReader deferredRunnerReader = default;
@@ -77,35 +87,48 @@ namespace BetfairStreamClient.ExchangeStream
                     {
                         if (reader.TokenType == JsonTokenType.PropertyName)
                         {
-                            if (reader.ValueTextEquals("id"))
+                            var propName = reader.GetString();
+                            //string propertyName = reader.GetString();
+                            if (reader.ValueTextEquals("id"u8))
                             {
                                 reader.Read();
-                                if (reader.TokenType == JsonTokenType.String) currentMarketId = reader.GetString();
+                                if (reader.TokenType == JsonTokenType.String)
+                                {
+                                    currentMarketId = reader.GetString();
+
+                                }
                             }
                             else if (reader.ValueTextEquals("marketDefinition"))
                             {
                                 reader.Read();
                                 freshDefinition = JsonSerializer.Deserialize<MarketDefinition>(ref reader);
                             }
-                            else if (reader.ValueTextEquals("img"))
+                            else if (reader.ValueTextEquals("img"u8))
                             {
                                 reader.Read();
-                                isImageLoop = reader.GetBoolean();
+                                if(reader.TokenType != JsonTokenType.Null)
+                                    isImageLoop = reader.GetBoolean();
                             }
-                            else if (reader.ValueTextEquals("rc"))
+                            else if (reader.ValueTextEquals("rc"u8))
                             {
                                 // Clone the current reader state to parse the runner data later
-                                deferredRunnerReader = reader; 
+                                deferredRunnerReader = reader;
                                 hasPriceChanges = true;
-                                
+
                                 // Skip the main reader past this entire array so it stays on track
                                 reader.Read();
                                 reader.Skip();
                             }
+                            else if (reader.ValueTextEquals("tv"u8))
+                            {
+                                reader.Read();
+                                if (reader.TokenType != JsonTokenType.Null)
+                                    totalVolume = reader.GetDouble();
+                            }
                             else
                             {
-                                reader.Read(); 
-                                reader.Skip(); 
+                                reader.Read();
+                                reader.Skip();
                             }
                         }
                     }
@@ -113,22 +136,269 @@ namespace BetfairStreamClient.ExchangeStream
                     // --- EXECUTION PHASE (ORDER ENFORCED) ---
                     if (currentMarketId != null)
                     {
-                        // 1. Flush the old cache first if the image loop flag was present anywhere in the block
+                        var marketCache = _marketCacheManager.GetOrCreateMarket(currentMarketId);
+
+
+                        //    // 1. Flush the old cache first if the image loop flag was present anywhere in the block
                         if (isImageLoop)
                         {
-                            _marketCache.ClearCacheForMarket(currentMarketId);
+                            marketCache.Clear();
                         }
 
-                        // 2. Process runner changes using the deferred reader window
+                        //    // 2. Process runner changes using the deferred reader window
                         if (hasPriceChanges && deferredRunnerReader.TokenType != JsonTokenType.None)
                         {
-                            ParseRunnerChanges(ref deferredRunnerReader, currentMarketId);
+
+                            ParseRunnerChanges(ref deferredRunnerReader, marketCache, timeStamp);
                         }
 
-                        // 3. Broadcast the clean state
+                        //    // 3. Broadcast the clean state
                         if (hasPriceChanges || freshDefinition != null)
                         {
-                            _marketCache.ProcessAndBroadcast(currentMarketId, freshDefinition);
+                            _marketCacheManager.ProcessAndBroadcast(currentMarketId, timeStamp, freshDefinition);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ParseRunnerChanges(ref Utf8JsonReader reader, MarketCache<T, TSnap> marketCache, DateTime timeStamp)
+        {
+            if (marketCache == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (reader.TokenType == JsonTokenType.StartObject)
+                {
+                    // Allocate lightweight snapshots on the stack frame
+                    Utf8JsonReader bdatbReader = default;
+                    Utf8JsonReader bdatlReader = default;
+                    Utf8JsonReader batbReader = default;
+                    Utf8JsonReader batlReader = default;
+                    Utf8JsonReader atbReader = default;
+                    Utf8JsonReader atlReader = default;
+                    Utf8JsonReader spbReader = default;
+                    Utf8JsonReader splReader = default;
+                    Utf8JsonReader trdReader = default;
+                    long selectionId = 0;
+                    double tradedVolume = -1.0;
+                    double lastTradedPrice = -1.0;
+                    double startingPriceNear = -1.0;
+                    double startingPriceFar = -1.0;
+                    bool processTraded = false;
+                    bool processBatb = false;
+                    bool processBatl = false;
+                    bool processBdatb = false;
+                    bool processBdatl = false;
+                    bool processAtb = false;
+                    bool processAtl = false;
+
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                    {
+                        if (reader.TokenType == JsonTokenType.PropertyName)
+                        {
+                            string propertyName = reader.GetString();
+
+                            if (reader.ValueTextEquals("id"u8))
+                            {
+                                reader.Read();
+                                if (reader.TokenType != JsonTokenType.Null)
+                                    selectionId = reader.GetInt64();
+                            }
+                            else if (reader.ValueTextEquals("tv"u8))
+                            {
+                                reader.Read();
+                                if (reader.TokenType != JsonTokenType.Null)
+                                    tradedVolume = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("ltp"u8))
+                            {
+                                reader.Read();
+                                if (reader.TokenType != JsonTokenType.Null)
+                                    lastTradedPrice = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("spn"u8))
+                            {
+                                reader.Read();
+                                if (reader.TokenType != JsonTokenType.Null)
+                                    startingPriceNear = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("spf"u8))
+                            {
+                                reader.Read();
+                                if(reader.TokenType!= JsonTokenType.Null)
+                                    startingPriceFar = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("batb"u8))
+                            {
+                                batbReader = reader;
+                                reader.Read();
+                                processBatb = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("batl"u8))
+                            {
+                                batlReader = reader;
+                                reader.Read();
+                                processBatl = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("bdatb"u8))
+                            {
+                                bdatbReader = reader;
+                                reader.Read();
+                                processBdatb = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("bdatl"u8))
+                            {
+                                bdatlReader = reader;
+                                reader.Read();
+                                processBdatl = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("atb"u8))
+                            {
+                                atbReader = reader;
+                                reader.Read();
+                                processAtb = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("atl"u8))
+                            {
+                                atlReader = reader;
+                                reader.Read();
+                                processAtl = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("spb"u8))
+                            {
+                                spbReader = reader;
+                                reader.Read();
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("spl"u8))
+                            {
+                                splReader = reader;
+                                reader.Read();
+                                reader.Skip();
+                            }
+                            else if (reader.ValueTextEquals("trd"u8))
+                            {
+                                trdReader = reader;
+                                reader.Read();                                
+                                processTraded = reader.TokenType != JsonTokenType.Null;
+                                reader.Skip();
+                            }
+                            else
+                            {
+                                reader.Read();
+                                reader.Skip();
+                            }
+                        }
+                    }
+                    if (selectionId != 0)
+                    {
+                        var runner = marketCache.GetOrCreateRunner(selectionId);
+                        runner.SelectionId = selectionId;
+                        if (typeof(T) == typeof(MarketRunnerBdat))
+                        {
+                            var runnerBdat = (MarketRunner<MarketRunnerBdat>)((object)runner);
+                            ref MarketRunnerBdat marketRunner = ref runnerBdat.RunnerData;
+                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack);
+                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerBdatTraded))
+                        {
+                            var runnerBdat = (MarketRunner<MarketRunnerBdatTraded>)((object)runner);
+                            ref MarketRunnerBdatTraded marketRunner = ref runnerBdat.RunnerData;
+                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack);
+                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerBat))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerBat>)((object)runner);
+                            ref MarketRunnerBat marketRunner = ref runnerBat.RunnerData;
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerBatTraded))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerBatTraded>)((object)runner);
+                            ref MarketRunnerBatTraded marketRunner = ref runnerBat.RunnerData;
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerAt))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerAt>)((object)runner);
+                            ref MarketRunnerAt marketRunner = ref runnerBat.RunnerData;
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerAtTraded))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerAtTraded>)((object)runner);
+                            ref MarketRunnerAtTraded marketRunner = ref runnerBat.RunnerData;
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerTraded))
+                        {
+                            var runnerTraded = (MarketRunner<MarketRunnerTraded>)((object)runner);
+                            ref MarketRunnerTraded marketRunner = ref runnerTraded.RunnerData;
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerLastTradedPrice))
+                        {
+                            var runnerTraded = (MarketRunner<MarketRunnerLastTradedPrice>)((object)runner);
+                            ref MarketRunnerLastTradedPrice marketRunner = ref runnerTraded.RunnerData;
+                            if (lastTradedPrice > 0.0)
+                                marketRunner.LastTradedPrice = lastTradedPrice;
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerTradedVolume))
+                        {
+                            var runnerTraded = (MarketRunner<MarketRunnerTradedVolume>)((object)runner);
+                            ref MarketRunnerTradedVolume marketRunner = ref runnerTraded.RunnerData;
+                            if (tradedVolume > 0.0)
+                                marketRunner.TradedVolume = tradedVolume;
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerBatTradedTVLTP))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerBatTradedTVLTP>)((object)runner);
+                            ref MarketRunnerBatTradedTVLTP marketRunner = ref runnerBat.RunnerData;
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                            if (tradedVolume > 0.0)
+                                marketRunner.TradedVolume = tradedVolume;
+                            if (lastTradedPrice > 0.0)
+                                marketRunner.LastTradedPrice = lastTradedPrice;
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerBatTVLTP))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerBatTVLTP>)((object)runner);
+                            ref MarketRunnerBatTVLTP marketRunner = ref runnerBat.RunnerData;
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                            if (tradedVolume > 0.0)
+                                marketRunner.TradedVolume = tradedVolume;
+                            if (lastTradedPrice > 0.0)
+                                marketRunner.LastTradedPrice = lastTradedPrice;
+                        }
+                        else if (typeof(T) == typeof(MarketRunnerAtTradedTVLTP))
+                        {
+                            var runnerBat = (MarketRunner<MarketRunnerAtTradedTVLTP>)((object)runner);
+                            ref MarketRunnerAtTradedTVLTP marketRunner = ref runnerBat.RunnerData;
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
+                            if (tradedVolume > 0.0)
+                                marketRunner.TradedVolume = tradedVolume;
+                            if (lastTradedPrice > 0.0)
+                                marketRunner.LastTradedPrice = lastTradedPrice;
                         }
                     }
                 }
@@ -136,118 +406,52 @@ namespace BetfairStreamClient.ExchangeStream
         }
 
         
-        private void ParseRunnerChanges(ref Utf8JsonReader reader, string? marketId)
-        {
-            if (marketId == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
-
-            // Loop through each runner object in the 'rc' array
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if (reader.TokenType == JsonTokenType.StartObject)
-                {
-                    long selectionId = 0;
-                    double lastTradedPrice = 0.0;
-                    double tradedVolume = 0.0;
-
-                    // Allocate lightweight snapshots on the stack frame
-                    Utf8JsonReader bdatbReader = default;
-                    Utf8JsonReader bdatlReader = default;
-                    Utf8JsonReader batbReader  = default;
-                    Utf8JsonReader batlReader  = default;
-                    Utf8JsonReader atbReader   = default;
-                    Utf8JsonReader atlReader   = default;
-                    Utf8JsonReader trdReader = default;
-                    
-
-                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
-                    {
-                        if (reader.TokenType == JsonTokenType.PropertyName)
-                        {
-                            if (reader.ValueTextEquals("id"))
-                            {
-                                reader.Read();
-                                if (reader.TokenType == JsonTokenType.Number) selectionId = reader.GetInt64();
-                            }
-                            else if (reader.ValueTextEquals("ltp"))
-                            {
-                                reader.Read();
-                                if (reader.TokenType == JsonTokenType.Number)
-                                {
-                                    lastTradedPrice = reader.GetDouble();
-
-                                }
-                            }
-                            else if (reader.ValueTextEquals("tv"))
-                            {
-                                reader.Read();
-                                if (reader.TokenType == JsonTokenType.Number)
-                                {
-                                    tradedVolume = reader.GetDouble();
-                                }
-                            }
-                        else if (reader.ValueTextEquals("bdatb")) { bdatbReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("bdatl")) { bdatlReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("batb")) { batbReader = reader; reader.Read(); reader.Skip(); }
-                        else if (reader.ValueTextEquals("batl")) { batlReader = reader; reader.Read(); reader.Skip(); }
-                        
-                        else
-                        {
-                            reader.Read();
-                            reader.Skip();
-                        }
-                        }
-                    }
-
-                    // --- DEFERRED PRICE STREAMING EXECUTION ---
-                    if (selectionId != 0)
-                    {
-                        var cache = _marketCache.GetOrCreateRunnerCache(marketId, selectionId);
-                        if(lastTradedPrice>0.0)
-                            cache.SetLastTradedPrice(lastTradedPrice);
-                        if(tradedVolume>0.0)
-                        cache.SetTotalVolume(tradedVolume);   
-
-                        if (bdatbReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatbReader, marketId, selectionId, BetfairLadderType.Bdatb);
-                        if (bdatlReader.TokenType != JsonTokenType.None) StreamLadderDeltas(ref bdatlReader, marketId, selectionId, BetfairLadderType.Bdatl);
-                        if (batbReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batbReader,  marketId, selectionId, BetfairLadderType.Batb);
-                        if (batlReader.TokenType  != JsonTokenType.None) StreamLadderDeltas(ref batlReader,  marketId, selectionId, BetfairLadderType.Batl);
-                        
-                    }
-                }
-            }
-        }
-
-        private void StreamLadderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, BetfairLadderType type)
+        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSizeCache levelDeltas)
         {
             reader.Read();
-            bool isLevelPrizeSize = type == BetfairLadderType.Batl || type == BetfairLadderType.Batb ||
-                type == BetfairLadderType.Bdatb || type == BetfairLadderType.Bdatl;
-            var cache = _marketCache.GetOrCreateRunnerCache(marketId, selectionId);
-            int i = 0;
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
-                if (reader.TokenType == JsonTokenType.StartArray) 
+                if (reader.TokenType == JsonTokenType.StartArray)
                 {
                     reader.Read();
-                    int level = i++;
-                    if (isLevelPrizeSize)
-                    {
-                        level = (int)reader.GetDouble();
-                        reader.Read();
-                    }
-                    double price = reader.GetDouble();
-                    reader.Read(); double size = reader.GetDouble();
+                    int level = (int)reader.GetDouble();
                     reader.Read();
+                    double price = reader.GetDouble();
+                    reader.Read();
+                    double size = reader.GetDouble();
                     
-                    cache.UpdateSingleSlot(level, price, size, type);
-                    
+                    reader.Read();
+                    levelDeltas.Update(level, price, size);                    
                 }
-            }
+
+            }        
         }
 
-        private void ParseOrderChangesArray(ref Utf8JsonReader reader)
+        
+        private void StreamPriceSizeDeltas(ref Utf8JsonReader reader, ref PriceSizeLadder priceSizeLadder)
         {
-            reader.Read(); 
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.StartArray) return;
+            
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (reader.TokenType == JsonTokenType.StartArray)
+                {
+                    reader.Read();
+                    double price = reader.GetDouble();
+                    reader.Read();
+                    double size = reader.GetDouble();
+                    reader.Read();
+                    priceSizeLadder.Update(price, size);                    
+                }
+            
+            }            
+        }
+
+
+        private void ParseOrderChangesArray(ref Utf8JsonReader reader, DateTime timeStamp)
+        {
+            reader.Read();
             if (reader.TokenType != JsonTokenType.StartArray) return;
             string? currentMarketId = null;
 
@@ -263,22 +467,23 @@ namespace BetfairStreamClient.ExchangeStream
                     {
                         if (reader.TokenType == JsonTokenType.PropertyName)
                         {
+                            string propertyName = reader.GetString();
                             if (reader.ValueTextEquals("id"))
                             {
                                 reader.Read();
-                                if (reader.TokenType == JsonTokenType.String) 
+                                if (reader.TokenType == JsonTokenType.String)
                                     currentMarketId = reader.GetString();
                             }
-                            else if (reader.ValueTextEquals("img"))
+                            else if (reader.ValueTextEquals("fullImage"))
                             {
                                 reader.Read();
                                 isImageLoop = reader.GetBoolean();
                             }
-                            else if (reader.ValueTextEquals("orc")) 
+                            else if (reader.ValueTextEquals("orc"))
                             {
                                 deferredOrderReader = reader;
                                 hasOrderChanges = true;
-                                
+
                                 reader.Read();
                                 reader.Skip();
                             }
@@ -293,60 +498,63 @@ namespace BetfairStreamClient.ExchangeStream
                     // --- EXECUTION PHASE ---
                     if (currentMarketId != null)
                     {
+                        var orderCache = _orderCacheManager.GetOrCreateMarket(currentMarketId);
                         if (isImageLoop)
                         {
-                            _orderCache.ClearCacheForMarket(currentMarketId);
+                            orderCache.Clear();
                         }
 
                         if (hasOrderChanges && deferredOrderReader.TokenType != JsonTokenType.None)
                         {
-                            ParseOrderRunnerChanges(ref deferredOrderReader, currentMarketId);
+                            ParseOrderRunnerChanges(ref deferredOrderReader, orderCache);
                         }
-                        if(hasOrderChanges)
-                            _orderCache.ProcessAndBroadcast(currentMarketId);
+                        if (hasOrderChanges)
+                            _orderCacheManager.ProcessAndBroadcast(currentMarketId, timeStamp);
                     }
                 }
             }
         }
 
-
-        private void ParseOrderRunnerChanges(ref Utf8JsonReader reader, string? marketId)
+        private void ParseOrderRunnerChanges(ref Utf8JsonReader reader, OrderMarketCache marketCache)
         {
-            if (marketId == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
+            if (marketCache == null || !reader.Read() || reader.TokenType != JsonTokenType.StartArray) return;
             long selectionId = 0;
             bool fullImage = false;
+            string marketId = marketCache.MarketId;
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
                 {
                     string val = reader.GetString();
-                    if (reader.ValueTextEquals("fullImage"))
+                    if (reader.ValueTextEquals("fullImage"u8))
                     {
+                        reader.Read();
                         fullImage = reader.GetBoolean();
                     }
-                    if (reader.ValueTextEquals("id")) 
-                    { 
+                    else if (reader.ValueTextEquals("id"u8))
+                    {
                         reader.Read();
                         if (reader.TokenType == JsonTokenType.Number)
                         {
-
                             selectionId = reader.GetInt64();
-                            var runnerCache = _orderCache.GetOrCreateRunnerCache(marketId, selectionId);
-                            runnerCache.ResetMatchedCount();
+                            ref OrderRunnerCache runnerCache = ref marketCache.GetOrCreateRunnerCache(marketId, selectionId);
+                            runnerCache.Clear();
                         }
                     }
-                    else if (reader.ValueTextEquals("uo"))
+                    else if (reader.ValueTextEquals("uo"u8))
                     {
-                        StreamOrders(ref reader, marketId, selectionId);
+
+                        StreamOrders(ref reader, marketId, selectionId,ref marketCache);
+                        
                     }
-                    else if (reader.ValueTextEquals("mb"))
+                    else if (reader.ValueTextEquals("mb"u8))
                     {
                         //Matched back
-                        StreamOrderDeltas(ref reader, marketId, selectionId, true);
+                        StreamOrderDeltas(ref reader, marketId, selectionId, true,ref marketCache);
                     }
-                    else if (reader.ValueTextEquals("ml"))
+                    else if (reader.ValueTextEquals("ml"u8))
                     {
-                        StreamOrderDeltas(ref reader, marketId, selectionId, false);
+                        StreamOrderDeltas(ref reader, marketId, selectionId, false,ref marketCache);
                     }
                     else
                     {
@@ -356,11 +564,10 @@ namespace BetfairStreamClient.ExchangeStream
                 }
             }
         }
-
-        private void StreamOrderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, bool isBack)
+        private void StreamOrderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, bool isBack,ref OrderMarketCache marketCache)
         {
             reader.Read();
-            var runnerCache = _orderCache.GetOrCreateRunnerCache(marketId, selectionId);
+            ref OrderRunnerCache runnerCache = ref marketCache.GetOrCreateRunnerCache(marketId, selectionId);
             int i = 0;
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
@@ -370,83 +577,239 @@ namespace BetfairStreamClient.ExchangeStream
                     double price = reader.GetDouble();
                     reader.Read();
                     double size = reader.GetDouble();
-                    
+
                     reader.Read();
                     if (isBack)
-                        runnerCache.UpdateMatchedBack(price, size);
+                        runnerCache.AddMatchedBacks(price, size);
                     else
-                        runnerCache.UpdateMatchedLay(price, size);
+                        runnerCache.AddMatchedLays(price, size);
 
                 }
             }
         }
-
-        private void StreamOrders(ref Utf8JsonReader reader, string marketId, long selectionId)
+        DateTime convertUnixToDateTime(long unixMilliseconds)
         {
-            reader.Read(); 
-            var runnerCache = _orderCache.GetOrCreateRunnerCache(marketId, selectionId);
-            Span<byte> betIdFallbackBuffer = stackalloc byte[32];
+            //const long unixMilliseconds = 1711929600000;
 
+            // Returns a UTC DateTime
+            DateTime dateTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds).UtcDateTime;
+            return dateTimeUtc;
+
+        }
+        private void StreamOrders(ref Utf8JsonReader reader, string marketId, long selectionId,ref OrderMarketCache marketCache)
+        {
+            //reader.Read();
+            ref OrderRunnerCache  runnerCache =  ref marketCache.GetOrCreateRunnerCache(marketId, selectionId);
+            Span<byte> betIdFallbackBuffer = stackalloc byte[32];
+            
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
-                if (reader.TokenType == JsonTokenType.StartArray)
+                if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
                 {
-                    long betId = 0; double p = 0; double sr = 0; double sm = 0; double sv=0; 
+                    string betId = ""; string rfo = ""; string rfs = "";
+                    double p = 0; double sl = 0.0; double sc = 0.0;
+                    double sr = 0.0; double sm = 0.0; double sv = 0.0; double s = 0.0;
+                    double avp = 0.0;
                     SideEnum side = SideEnum.Back;
-                    OtEnum ot = OtEnum.LIMIT;
-                    PtEnum pt = PtEnum.LAPSE;
-                    StatusEnum status = StatusEnum.EXECUTABLE;
-
-                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    OrderTypeEnum ot = OrderTypeEnum.LIMIT;
+                    PersistenceTypeEnum pt = PersistenceTypeEnum.LAPSE;
+                    OrderStatusEnum status = OrderStatusEnum.EXECUTABLE;
+                    DateTime matchedDate = DateTime.MinValue;
+                    DateTime cancelledDate = DateTime.MinValue;
+                    DateTime placedDate = DateTime.MinValue;
+                    
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                     {
+
+
                         if (reader.TokenType == JsonTokenType.PropertyName)
                         {
-                            if (reader.ValueTextEquals("id"))
+                            string propertyName = reader.GetString();
+                            if (reader.ValueTextEquals("id"u8))
                             {
                                 reader.Read();
                                 if (reader.HasValueSequence)
                                 {
                                     reader.ValueSequence.CopyTo(betIdFallbackBuffer);
                                     var span = betIdFallbackBuffer.Slice(0, (int)reader.ValueSequence.Length);
-                                    Utf8Parser.TryParse(span, out betId, out _);
+                                    //Utf8Parser.TryParse(span, out betId, out _);
+                                    betId = span.ToString();
                                 }
                                 else
                                 {
-                                    Utf8Parser.TryParse(reader.ValueSpan, out betId, out _);
+                                    //Utf8Parser.TryParse(reader.ValueSpan, out betId, out _);
+                                    betId = reader.GetString();
                                 }
                             }
-                            else if (reader.ValueTextEquals("p"))  { reader.Read(); p = reader.GetDouble(); }
-                            else if (reader.ValueTextEquals("sr")) { reader.Read(); sr = reader.GetDouble(); }
-                            else if (reader.ValueTextEquals("sm")) { reader.Read(); sm = reader.GetDouble(); }
-                            else if (reader.ValueTextEquals("sv")) { reader.Read(); sv = reader.GetDouble(); }
-                            else if(reader.ValueTextEquals("pt")) { reader.Read(); pt = Enum.Parse<PtEnum>(reader.GetString()); }
-                            else if(reader.ValueTextEquals("ot")) { reader.Read(); ot = Enum.Parse<OtEnum>(reader.GetString()); }
-                            else if (reader.ValueTextEquals("side"))
+                            else if (reader.ValueTextEquals("s"u8))
                             {
                                 reader.Read();
-                                side = Enum.Parse<SideEnum>(reader.GetString());                                
+                                s = reader.GetDouble();
                             }
-                            else if (reader.ValueTextEquals("status"))
+                            else if (reader.ValueTextEquals("p"u8))
                             {
                                 reader.Read();
-                                status = Enum.Parse<StatusEnum>(reader.GetString());
+                                p = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("sr"u8))
+                            {
+                                reader.Read();
+                                sr = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("sm"u8))
+                            {
+                                reader.Read();
+                                sm = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("sv"u8))
+                            {
+                                reader.Read();
+                                sv = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("sl"u8))
+                            {
+                                reader.Read();
+                                sl = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("sc"u8))
+                            {
+                                reader.Read();
+                                sc = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("avp"u8))
+                            {
+                                reader.Read();
+                                avp = reader.GetDouble();
+                            }
+                            else if (reader.ValueTextEquals("pt"u8))
+                            {
+                                reader.Read();
                                 
+                                var val = reader.GetString();
+                                switch (val)
+                                {
+                                    case "L":
+                                        pt = PersistenceTypeEnum.LAPSE;
+                                        break;
+                                    case "P":
+                                        pt = PersistenceTypeEnum.PERSIST;
+                                        break;
+                                    case "MOC":
+                                        pt = PersistenceTypeEnum.MARKET_ON_CHANGE;
+                                        break;
+                                }
+                            }
+                            else if (reader.ValueTextEquals("ot"u8))
+                            {
+                                reader.Read();
+                                var val = reader.GetString();
+                                switch (val)
+                                {
+                                    case "L":
+                                        ot = OrderTypeEnum.LIMIT;
+                                        break;
+                                    case "LOC":
+                                        ot = OrderTypeEnum.LIMIT_ON_CLOSE;
+                                        break;
+                                    case "MOC":
+                                        ot = OrderTypeEnum.MARKET_ON_CLOSE;
+                                        break;
+                                }
+                            }
+
+                            else if (reader.ValueTextEquals("side"u8))
+                            {
+                                reader.Read();
+                                var val = reader.GetString();
+                                switch (val)
+                                {
+                                    case "B":
+                                        side = SideEnum.Back;
+                                        break;
+                                    case "L":
+                                        side = SideEnum.Lay;
+                                        break;
+                                }
+                            }
+                            else if (reader.ValueTextEquals("status"u8))
+                            {
+                                reader.Read();
+                                var val = reader.GetString();
+                                switch (val)
+                                {
+                                    case "E":
+                                        status = OrderStatusEnum.EXECUTABLE;
+                                        break;
+                                    case "EC":
+                                        status = OrderStatusEnum.EXECUTION_COMPLETE;
+                                        break;
+                                }
+                            }
+                            else if (reader.ValueTextEquals("rfo"u8))
+                            {
+                                reader.Read();
+                                rfo = reader.GetString();
+                            }
+                            else if (reader.ValueTextEquals("rfs"u8))
+                            {
+                                reader.Read();
+                                rfs = reader.GetString();
+                            }
+                            else if (reader.ValueTextEquals("cd"u8))
+                            {
+                                reader.Read();
+                                cancelledDate = convertUnixToDateTime(reader.GetInt64());
+                            }
+                            else if (reader.ValueTextEquals("md"u8))
+                            {
+                                reader.Read();
+                                matchedDate = convertUnixToDateTime(reader.GetInt64());
+                            }
+                            else if (reader.ValueTextEquals("pd"u8))
+                            {
+                                reader.Read();
+                                placedDate = convertUnixToDateTime(reader.GetInt64());
                             }
                             else
                             {
                                 reader.Read();
                                 reader.Skip();
                             }
+
                         }
                     }
-                    runnerCache.UpdateOrAddOrder(betId, p, sr, sm, sv, side, status, pt, ot);
+
+
+
+                    var order = new Order();
+                    order.BetId = betId;
+                    order.Price = p;
+                    order.SizeRemaining = sr;
+                    order.SizeMatched = sm;
+                    order.SizeVoided = sv;
+                    order.SizeLapsed = sl;
+                    order.SizeCancelled = sc;
+                    order.AveragePriceMatched = avp;
+                    order.Side = side;
+                    order.Size = s;
+                    order.OrderStatus = status;
+                    order.Persistence = pt;
+                    order.MatchedDate = matchedDate;
+                    order.CancelledDate = cancelledDate;
+                    order.PlacedDate = placedDate;
+                    order.OrderType = ot;
+                    order.ReferenceOrder = rfo;
+                    order.ReferenceStrategy = rfs;
+
+
+                    runnerCache.AddOrder(order);
+                    
                 }
             }
+            
         }
 
 
-
-        
 
         private void ParseAndLogStatusMessage(ref Utf8JsonReader reader)
         {

@@ -1,83 +1,101 @@
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.ComponentModel.DataAnnotations;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class OrderCacheManager
+    public class OrderCacheManager : IDisposable, IClearable
     {
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, OrderRunnerCache>> _orderCache = new();
-        
-        public event EventHandler<OrderMarketSnap>? OrderSnapshotUpdated;
-
-        public OrderRunnerCache GetOrCreateRunnerCache(string marketId, long selectionId)
+        private readonly ConcurrentDictionary<string, OrderMarketCache> _markets = new ConcurrentDictionary<string, OrderMarketCache>();
+        public event EventHandler<OrderMarketChangeNotification>? OrderNotificationReceived;
+        public OrderMarketCache GetOrCreateMarket(string marketId)
         {
-            var runners = _orderCache.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, OrderRunnerCache>());
-            return runners.GetOrAdd(selectionId, _ => new OrderRunnerCache());
+            var marketCache = _markets.GetOrAdd(marketId, _ => new OrderMarketCache(marketId));
+            return marketCache;
         }
-
-        public void ClearCacheForMarket(string marketId)
+        public void Clear()
         {
-            if (_orderCache.TryRemove(marketId, out var runners))
+            _markets.Clear();
+        }
+        public void Dispose() { }
+        public void ProcessAndBroadcast(string marketId, DateTime timeStamp)
+        {
+            if (!_markets.TryGetValue(marketId, out var marketCache)) return;
+            int totalRunners = marketCache.RunnerCount;
+            if (totalRunners == 0) return;
+            int index = 0;
+            OrderRunnerSnap[] pooledRunners = ArrayPool<OrderRunnerSnap>.Shared.Rent(totalRunners);
+
+            foreach (var kvp in marketCache.Runners)
             {
-                runners.Clear();
-            }
-        }
+                // Cast directly to the generic struct (no double casting needed if setup correctly)
+                pooledRunners[index++] = (OrderRunnerSnap)marketCache.ExtractPooledSnapshot(kvp.Key);
+            }            
 
-        public void ProcessAndBroadcast(string marketId)
-        {
-            if (!_orderCache.TryGetValue(marketId, out var runners)) return;
-
-            // Determine maximum potential slots needed across all runner books
-            int maxPotentialOrders = 0;
-            int totalBackCount = 0;
-            int totalLayCount = 0;
-            foreach (var kvp in runners) {
-                maxPotentialOrders += kvp.Value.ActiveCount;
+            var snap = new OrderMarketSnap
+            {
                 
-            }
-            if (maxPotentialOrders == 0) return;
-
-            OrderSnap[] pooledOrders = ArrayPool<OrderSnap>.Shared.Rent(maxPotentialOrders);
-            int writeIndex = 0;
-            foreach (var kvp in runners)
-            {
-                writeIndex = kvp.Value.CopyActiveOrdersTo(pooledOrders, writeIndex);                
-            }
-
-            var snap = new OrderMarketSnap
-            {
-                MarketId = marketId,
-                Orders = pooledOrders,
-                OrderCount = writeIndex
+                Runners = pooledRunners,
+                RunnerCount = totalRunners
             };
 
-            OrderSnapshotUpdated?.Invoke(this, snap);
+            var notification = new OrderMarketChangeNotification
+            {
+                MarketId = marketId,
+                TimeStamp = timeStamp,
+                OrderSnap = new OrderMarketSnap { RunnerCount = totalRunners, Runners = pooledRunners }
+            };
+
+            OrderNotificationReceived?.Invoke(this, notification);
+            notification.Dispose();
         }
 
-        public OrderMarketSnap? GetMarketSnap(string marketId)
+        public OrderMarketSnap GetOrderMarketSnap(string marketId)
         {
-            if (!_orderCache.TryGetValue(marketId, out var runners)) return null;
+            _markets.TryGetValue(marketId, out var marketCache);
+            int totalRunners = marketCache.RunnerCount;            
+            int index = 0;
+            OrderRunnerSnap[] pooledRunners = ArrayPool<OrderRunnerSnap>.Shared.Rent(totalRunners);
 
-            // Determine maximum potential slots needed across all runner books
-            int maxPotentialOrders = 0;
-            foreach (var kvp in runners) maxPotentialOrders += kvp.Value.ActiveCount;
-            if (maxPotentialOrders == 0) return null;
-
-            OrderSnap[] pooledOrders = ArrayPool<OrderSnap>.Shared.Rent(maxPotentialOrders);
-            int writeIndex = 0;
-
-            foreach (var kvp in runners)
+            foreach (var kvp in marketCache.Runners)
             {
-                writeIndex = kvp.Value.CopyActiveOrdersTo(pooledOrders, writeIndex);
+                // Cast directly to the generic struct (no double casting needed if setup correctly)
+                pooledRunners[index++] = (OrderRunnerSnap)marketCache.ExtractPooledSnapshot(kvp.Key);
             }
 
             var snap = new OrderMarketSnap
             {
-                MarketId = marketId,
-                Orders = pooledOrders,
-                OrderCount = writeIndex
+
+                Runners = pooledRunners,
+                RunnerCount = totalRunners
             };
-            return snap;
+            return snap;            
         }
+
+        //    public OrderMarketSnap? GetMarketSnap(string marketId)
+        //    {
+        //        if (!_orderCache.TryGetValue(marketId, out var runners)) return null;
+
+        //        // Determine maximum potential slots needed across all runner books
+        //        int maxPotentialOrders = 0;
+        //        foreach (var kvp in runners) maxPotentialOrders += kvp.Value.ActiveCount;
+        //        if (maxPotentialOrders == 0) return null;
+
+        //        OrderSnap[] pooledOrders = ArrayPool<OrderSnap>.Shared.Rent(maxPotentialOrders);
+        //        int writeIndex = 0;
+
+        //        foreach (var kvp in runners)
+        //        {
+        //            writeIndex = kvp.Value.CopyActiveOrdersTo(pooledOrders, writeIndex);
+        //        }
+
+        //        var snap = new OrderMarketSnap
+        //        {
+        //            MarketId = marketId,
+        //            Orders = pooledOrders,
+        //            OrderCount = writeIndex
+        //        };
+        //        return snap;
+        //    }
     }
 }

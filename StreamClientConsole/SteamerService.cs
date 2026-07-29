@@ -8,9 +8,9 @@ using BetfairStreamClient.ExchangeStream;
 
 namespace StreamClientConsole{
 
-    public class SteamerService : IDisposable
+    public class SteamerService<T, TSnap> : IDisposable where T : struct, IDisposable, IClearable where TSnap : struct, IDisposable, IClearable
     {
-        private readonly StreamClient _streamClient;
+        private readonly StreamClient<T, TSnap> _streamClient;
 
         private readonly BettingClient _bettingClient;
 
@@ -33,7 +33,7 @@ namespace StreamClientConsole{
 
         private readonly PendingLayMonitor _pendingLayMonitor;
 
-        public SteamerService(BettingClient bettingClient, StreamClient streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
+        public SteamerService(BettingClient bettingClient, StreamClient<T, TSnap> streamClient, Logger logger, CancellationToken cancellationToken, double stakePerBet = 1.0)
         {
             _bettingClient = bettingClient ?? throw new ArgumentNullException();
             _streamClient = streamClient ?? throw new ArgumentNullException();
@@ -85,18 +85,37 @@ namespace StreamClientConsole{
             
         }
 
-        public void OnMarketPriceUpdate(object ? sender, MarketChangeNotification market)
+        //public void OnMarketNotificationReceived(object? sender, MarketChangeNotification<MarketRunnerBatTVLTP> snap)
+        //{
+        //    //using (snap)
+        //    {
+        //        string marketId = snap.MarketId;
+        //        DateTime scheduledOff = DateTime.MinValue;
+        //        if (snap.MarketDefinition != null)
+        //        {
+        //            scheduledOff = snap.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
+        //        }
+        //        var trackers = _markets.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, RunnerTracker>());
+        //        var cat = _marketCatalogues.FirstOrDefault(x => x.MarketId == snap.MarketId);
+        //    }
+        //}
+
+        public void OnMarketPriceUpdate(object? sender, MarketChangeNotification<TSnap> notification)
         {
-            using(market)    //cleanly returns arrays to the pool at the end of the block
+            //using(market)    //cleanly returns arrays to the pool at the end of the block
             {
-                string marketId = market.MarketId;
+                MarketSnap<MarketRunnerSnapBatTVLTP> marketSnap = (MarketSnap<MarketRunnerSnapBatTVLTP>)(object)notification.MarketSnap;
+                
+                string marketId = notification.MarketId;
                 DateTime scheduledOff = DateTime.MinValue;
-                if (market.MarketDefinition != null)
+                if(notification.MarketSnap.MarketDefinition!=null)
+                //if (notification.MarketDefinition != null)
                 {
-                    scheduledOff = market.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
+                    //scheduledOff =  notification.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
+                    scheduledOff = notification.MarketSnap.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
                 }
                 var trackers = _markets.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, RunnerTracker>());
-                var cat = _marketCatalogues.FirstOrDefault(x=>x.MarketId==market.MarketId);
+                var cat = _marketCatalogues.FirstOrDefault(x=>x.MarketId==notification.MarketId);
                 
                 string eventName = "gigi";
                 if (cat != null)
@@ -106,22 +125,23 @@ namespace StreamClientConsole{
                     {
                         eventName = cat.Event.Name;
                     }
-                }
-                for(int i = 0; i < market.PriceSnapshot.RunnerCount; i++)
+                }                
+                for(int i = 0; i < marketSnap.RunnerCount; i++)
                 {
-                    var runnerSnap = market.PriceSnapshot.Runners[i];
-                    var bestBack = SnapshotPriceExtensions.FindBestPrice(runnerSnap.BestAvailableToBack,runnerSnap.BatbCount);
-                    var bestLay = SnapshotPriceExtensions.FindBestPrice(runnerSnap.BestAvailableToLay,runnerSnap.BatlCount);
+                    var runnerSnap = marketSnap.RunnerPrices[i];
+                    var runnerData = runnerSnap.RunnerData;
+                    var bestBack = runnerData.BestAvailableToBack[0];// SnapshotPriceExtensions.FindBestPrice(runnerData.BestAvailableToBack,runnerData.BestAvailableToBackCount);
+                    var bestLay = runnerData.BestAvailableToLay[0];// SnapshotPriceExtensions.FindBestPrice(runnerData.BestAvailableToLay,runnerData.BestAvailableToLayCount);
                     var bestBackPrice = 0.0;
                     var bestBackSize = 0.0;
-                    if (bestBack!=null)
+                    if (bestBack.Size>0)
                     {
                         bestBackPrice = bestBack.Price;
                         bestBackSize = bestBack.Size;
                     }
                     var bestLayPrice = 0.0;
                     var bestLaySize = 0.0;
-                    if (bestLay != null)
+                    if (bestLay.Size > 0)
                     {
                         bestLayPrice = bestLay.Price;
                         bestLaySize = bestLay.Size;
@@ -181,15 +201,20 @@ namespace StreamClientConsole{
                 
             }
         }
-        public void OnOrderSnapUpdated(object? sender, OrderMarketSnap snap)
+        public void OnOrderSnapUpdated(object? sender, OrderMarketChangeNotification notification)
         {
-            string marketId = snap.MarketId;
-            for(int i = 0; i < snap.OrderCount; i++)
-            {
-                var order = snap.Orders[i];
-                
-                _orderBookManager.UpdateOrderStatus(order.BetId.ToString(), order.Status);
-            }
+            string marketId = notification.MarketId;
+            int runnerCount = notification.OrderSnap.RunnerCount;
+            for(int i = 0; i < runnerCount; i++)
+            {                
+                var runnerSnap = notification.OrderSnap.Runners[i];
+                long selectionId = runnerSnap.SelectionId;
+                for(int o = 0; o < runnerSnap.UnmatchedOrderCount; o++)
+                {
+                    var order = runnerSnap.UnmatchedOrders[o];
+                    _orderBookManager.UpdateOrderStatus(selectionId, order.BetId, order.OrderStatus);
+                }
+            }            
         }
         
 
@@ -227,8 +252,8 @@ namespace StreamClientConsole{
                 // 3. Start the asynchronous "Kill" clock without blocking your main thread
                 await Task.Delay(TimeSpan.FromSeconds(killDelaySeconds));
 
-                StatusEnum currentStatus = _orderBookManager.GetOrderStatus(betId);
-                if(currentStatus == StatusEnum.EXECUTABLE)
+                OrderStatusEnum currentStatus = _orderBookManager.GetOrderStatus(selectionId, betId);
+                if(currentStatus == OrderStatusEnum.EXECUTABLE)
                 {
                     // 4. Fire the cancel command. 
                     // If it's already 100% matched, Betfair API will safely return a 'BET_TAKEN_OR_LAPSED' error, which you can ignore.
@@ -257,7 +282,7 @@ namespace StreamClientConsole{
                         _logger.Log($"[PLACEFILLORKILL] Exception placing kill order for market: {marketId}, runner: {selectionId} - {ex.Message}");
                     }
                 }
-                _orderBookManager.RemoveOrder(betId);
+                _orderBookManager.RemoveOrder(selectionId, betId);
                 if(tracker.AlreadyBacked)
                 {
                     double layTarget = TradeCalculator.LayTarget(price);

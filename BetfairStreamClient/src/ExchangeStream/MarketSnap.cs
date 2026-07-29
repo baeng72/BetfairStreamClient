@@ -1,0 +1,26 @@
+﻿using BetfairStreamClient.ExchangeStream;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BetfairStreamClient.ExchangeStream
+{
+    public struct MarketSnap<T> : IDisposable, IClearable where T : struct, IDisposable, IClearable
+    {
+        public MarketDefinition MarketDefinition { get; set; }
+        public MarketRunnerSnap<T>[] RunnerPrices { get; init; }
+
+        public int RunnerCount { get; init; }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < RunnerCount; i++)
+            {
+                RunnerPrices[i].Dispose();
+            }
+        }
+        public void Clear() { }
+    }
+}

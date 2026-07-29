@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BetfairStreamClient.Betting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BetfairStreamClient.ExchangeStream
 {
-    public class PriceSize
+    public readonly struct PriceSize
     {
         public double Price { get; }
         public double Size { get; }
@@ -16,5 +17,8 @@ namespace BetfairStreamClient.ExchangeStream
             Price = price;
             Size = size;
         }
+        
     }
+
+    
 }

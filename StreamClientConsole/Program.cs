@@ -58,11 +58,11 @@ try
     await using var streamDumper = new RawStreamDumper();
     streamDumper.Init(Path.Combine(logDir, $"raw_string_initial-{DateTime.UtcNow.ToString("yyyy-MM-dd hh-mm-ss")}.json"), cancellationToken);
 
-    var streamClient = new StreamClient("stream-api.betfair.com", 443, session.AppKey, session.Token, logger, streamDumper);
+    var streamClient = new StreamClient<MarketRunnerBatTVLTP, MarketRunnerSnapBatTVLTP>("stream-api.betfair.com", 443, session.AppKey, session.Token, logger, streamDumper);
     //var outboundOrderChannel = Channel.CreateUnbounded<OutboundCommand>();
     await streamClient.ConnectAndAuthenticateAsync(cancellationToken);
 
-    SteamerService steamerService = new SteamerService(betfairAsyncClient, streamClient, logger, cts.Token, 1);
+    SteamerService<MarketRunnerBatTVLTP, MarketRunnerSnapBatTVLTP> steamerService = new SteamerService<MarketRunnerBatTVLTP, MarketRunnerSnapBatTVLTP>(betfairAsyncClient, streamClient, logger, cts.Token, 1);
     await steamerService.Start();
     Task streamTask = Task.Run(() => streamClient.RunLoopAsync(cancellationToken));
     await Task.WhenAll(streamTask);
