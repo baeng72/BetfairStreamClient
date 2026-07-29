@@ -28,67 +28,67 @@ namespace BetfairStreamClient.ExchangeStream
 
     public struct MarketRunnerBdat : IClearable, IDisposable
     {
-        public const int MaxBdatCount = 10;
-
         public LevelPriceSizeCache BestDisplayAvailableToBack;
-        public int BestDisplayAvailableToBackCount = 0;
+        public int BestDisplayAvailableToBackCount { get { return BestDisplayAvailableToBack.Count; } }
         public LevelPriceSizeCache BestDisplayAvailableToLay;
-        public int BestDisplayAvailableToLayCount = 0;
+        public int BestDisplayAvailableToLayCount { get { return BestDisplayAvailableToLay.Count; } }
         public MarketRunnerBdat()
         {
         }
         public void Clear()
-        {
-            BestDisplayAvailableToBackCount = BestDisplayAvailableToBackCount = 0;
+        {            
+            BestDisplayAvailableToBack.Clear();
+            BestDisplayAvailableToLay.Clear();
         }
         public void Dispose() { }
     }
 
     public struct MarketRunnerBat : IClearable, IDisposable
-    {
-        public const int MaxBatCount = 10;        
+    {        
         public LevelPriceSizeCache BestAvailableToBack;
-        public int BestAvailableToBackCount = 0;
+        public int BestAvailableToBackCount { get { return BestAvailableToBack.Count; } }
         public LevelPriceSizeCache BestAvailableToLay;
-        public int BestAvailableToLayCount = 0;
+        public int BestAvailableToLayCount { get { return BestAvailableToLay.Count; } }
         public MarketRunnerBat()
         {
         }
         public void Clear()
-        {
-            BestAvailableToBackCount = BestAvailableToLayCount = 0;
+        {            
+            BestAvailableToBack.Clear();
+            BestAvailableToLay.Clear();
         }
         public void Dispose() { }
     }
 
     public struct MarketRunnerAt : IClearable, IDisposable
     {
-        public const int MaxAtCount = 20;
+        
         public PriceSizeLadder AvailableToBack;
-        public int AvailableToBackCount = 0;
+        public int AvailableToBackCount { get {return AvailableToBack.LadderCount; } }
         public PriceSizeLadder AvailableToLay;
-        public int AvailableToLayCount = 0;
+        public int AvailableToLayCount { get { return AvailableToLay.LadderCount; } }
         public MarketRunnerAt()
         {
         }
         public void Clear()
-        {
-            AvailableToBackCount = AvailableToLayCount = 0;
+        {        
+            AvailableToBack.Clear();
+            AvailableToLay.Clear();
         }
         public void Dispose() { }
     }
 
     public struct MarketRunnerTraded : IClearable, IDisposable
     {
-        public const int MaxTradedCount = 20;
+        
         public PriceSizeLadder Traded;
-        public int TradedCount = 0;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public MarketRunnerTraded()
         {
         }
         public void Clear()
-        {
-            TradedCount = 0;
+        {            
+            Traded.Clear();
         }
         public void Dispose() { }
     }
@@ -121,24 +121,22 @@ namespace BetfairStreamClient.ExchangeStream
 
     //composite - sort of - types    
     public struct MarketRunnerAtTraded : IClearable, IDisposable
-    {
-        public const int MaxAtCount = 20;
+    {        
         public PriceSizeLadder AvailableToBack;
-        public int AvailableToBackCount;
+        public int AvailableToBackCount { get { return AvailableToBack.LadderCount; } }
         public PriceSizeLadder AvailableToLay;
-        public int AvailableToLayCount;
-        public const int MaxTradedCount = 20;
+        public int AvailableToLayCount { get { return AvailableToLay.LadderCount; } }         
         public PriceSizeLadder Traded;
-        public int TradedCount;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public MarketRunnerAtTraded()
-        {
-            AvailableToBackCount = 0;
-            AvailableToLayCount = 0;
-            TradedCount = 0;
+        {            
         }
         public void Clear()
         {
-            AvailableToBackCount = AvailableToLayCount = TradedCount = 0;
+            AvailableToBack.Clear();
+            AvailableToLay.Clear();
+            Traded.Clear();
+            
         }
         public void Dispose()
         {
@@ -148,27 +146,26 @@ namespace BetfairStreamClient.ExchangeStream
 
     public struct MarketRunnerAtTradedTVLTP : IClearable, IDisposable
     {
-        public const int MaxAtCount = 20;
+        
         public PriceSizeLadder AvailableToBack;
-        public int AvailableToBackCount;
+        public int AvailableToBackCount { get { return AvailableToBack.LadderCount; } }
         public PriceSizeLadder AvailableToLay;
-        public int AvailableToLayCount;
-        public const int MaxTradedCount = 20;
+        public int AvailableToLayCount { get { return AvailableToLay.LadderCount; } }        
         public PriceSizeLadder Traded;
-        public int TradedCount;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public double LastTradedPrice = 0.0;
         public double TradedVolume = 0.0;
         public MarketRunnerAtTradedTVLTP()
-        {
-            AvailableToBackCount = 0;
-            AvailableToLayCount = 0;
-            TradedCount = 0;
+        {            
             LastTradedPrice = TradedVolume = 0.0;
         }
         public void Clear()
         {
-            AvailableToBackCount = AvailableToLayCount = TradedCount = 0;
+            
             LastTradedPrice = TradedVolume = 0.0;
+            AvailableToBack.Clear();
+            AvailableToLay.Clear();
+            Traded.Clear(); 
         }
         public void Dispose()
         {
@@ -176,98 +173,96 @@ namespace BetfairStreamClient.ExchangeStream
         }
     }
     public struct MarketRunnerBatTraded : IClearable, IDisposable
-    {
-        public const int MaxBatCount = 10;        
+    {        
         public LevelPriceSizeCache BestAvailableToBack;
-        public int BestAvailableToBackCount;
+        public int BestAvailableToBackCount { get { return BestAvailableToBack.Count; } }
         public LevelPriceSizeCache BestAvailableToLay;
-        public int BestAvailableToLayCount;
-        public const int MaxTradedCount = 20;
+        public int BestAvailableToLayCount { get { return BestAvailableToLay.Count; } }
+        
         public PriceSizeLadder Traded;
-        public int TradedCount;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public MarketRunnerBatTraded()
-        {
-            BestAvailableToBackCount = 0;
-            BestAvailableToLayCount = 0;            
-            TradedCount = 0;
+        {            
         }
         public void Clear()
         {
-            BestAvailableToBackCount = BestAvailableToLayCount = TradedCount = 0;
+            BestAvailableToBack.Clear();
+            BestAvailableToLay.Clear();
+            Traded.Clear();
         }
         public void Dispose() { }
     }
     public struct MarketRunnerBdatTraded : IClearable, IDisposable
     {
-        public const int MaxBdatCount = 10;
+        
         public LevelPriceSizeCache BestDisplayAvailableToBack;
-        public int BestDisplayAvailableToBackCount;
+        public int BestDisplayAvailableToBackCount { get { return BestDisplayAvailableToBack.Count; } }
         public LevelPriceSizeCache BestDisplayAvailableToLay;
-        public int BestDisplayAvailableToLayCount;
-        public const int MaxTradedCount = 20;
+        public int BestDisplayAvailableToLayCount { get { return BestDisplayAvailableToLay.Count; } }
+        
         public PriceSizeLadder Traded;
-        public int TradedCount;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public MarketRunnerBdatTraded()
-        {
-            BestDisplayAvailableToBackCount = 0;
-            BestDisplayAvailableToLayCount = 0;
-            TradedCount = 0;
+        {            
         }
         public void Clear()
         {
-            BestDisplayAvailableToBackCount = BestDisplayAvailableToLayCount = TradedCount = 0;
+            BestDisplayAvailableToBack.Clear();
+            BestDisplayAvailableToLay.Clear();
+            Traded.Clear();
         }
         public void Dispose() { }
     }
 
     public struct MarketRunnerBatTVLTP : IClearable, IDisposable
     {
-        public const int MaxBatCount = 10;        
+        
         public LevelPriceSizeCache BestAvailableToBack;
-        public int BestAvailableToBackCount;
+        public int BestAvailableToBackCount { get { return BestAvailableToBack.Count; } }
         public LevelPriceSizeCache BestAvailableToLay;
-        public int BestAvailableToLayCount;
+        public int BestAvailableToLayCount { get { return BestAvailableToLay.Count; } }
         public double LastTradedPrice = 0.0;
         public double TradedVolume = 0.0;
         public MarketRunnerBatTVLTP()
         {
-            BestAvailableToBackCount = BestAvailableToLayCount = 0;
+            
             TradedVolume = LastTradedPrice = 0.0;
         }
         public void Clear()
         {
-            BestAvailableToBackCount = BestAvailableToLayCount = 0;
+            
             LastTradedPrice = 0.0;
             TradedVolume = 0.0;
+            BestAvailableToBack.Clear();
+            BestAvailableToLay.Clear();
         }
         public void Dispose() { }
     }
 
     public struct MarketRunnerBatTradedTVLTP : IClearable, IDisposable
     {
-        public const int MaxBatCount = 10;        
+        
         public LevelPriceSizeCache BestAvailableToBack;
-        public int BestAvailableToBackCount;
+        public int BestAvailableToBackCount { get {return BestAvailableToBack.Count; } }
         public LevelPriceSizeCache BestAvailableToLay;
-        public int BestAvailableToLayCount;
-        public const int MaxTradedCount = 20;
+        public int BestAvailableToLayCount { get { return BestAvailableToLay.Count; } }
+        
         public PriceSizeLadder Traded;
-        public int TradedCount;
+        public int TradedCount { get { return Traded.LadderCount; } }
         public double LastTradedPrice = 0.0;
         public double TradedVolume = 0.0;
         public MarketRunnerBatTradedTVLTP()
         {
-            BestAvailableToBackCount = 0;
-            BestAvailableToLayCount = 0;
-            TradedCount = 0;
             LastTradedPrice = 0.0;
             TradedVolume = 0.0;
         }
         public void Clear()
         {
-            BestAvailableToBackCount = BestAvailableToLayCount = TradedCount = 0;
             LastTradedPrice = 0.0;
             TradedVolume = 0.0;
+            BestAvailableToBack.Clear();
+            BestAvailableToLay.Clear();
+            Traded.Clear();
         }
         public void Dispose() { }
     }

@@ -304,52 +304,52 @@ namespace BetfairStreamClient.ExchangeStream
                         {
                             var runnerBdat = (MarketRunner<MarketRunnerBdat>)((object)runner);
                             ref MarketRunnerBdat marketRunner = ref runnerBdat.RunnerData;
-                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack, ref marketRunner.BestDisplayAvailableToBackCount);
-                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay, ref marketRunner.BestDisplayAvailableToLayCount);
+                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack);
+                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay);
                         }
                         else if (typeof(T) == typeof(MarketRunnerBdatTraded))
                         {
                             var runnerBdat = (MarketRunner<MarketRunnerBdatTraded>)((object)runner);
                             ref MarketRunnerBdatTraded marketRunner = ref runnerBdat.RunnerData;
-                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack, ref marketRunner.BestDisplayAvailableToBackCount);
-                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay, ref marketRunner.BestDisplayAvailableToLayCount);
-                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (bdatbReader.TokenType != JsonTokenType.None && processBdatb) StreamLevelDeltas(ref bdatbReader, ref marketRunner.BestDisplayAvailableToBack);
+                            if (bdatlReader.TokenType != JsonTokenType.None && processBdatl) StreamLevelDeltas(ref bdatlReader, ref marketRunner.BestDisplayAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                         }
                         else if (typeof(T) == typeof(MarketRunnerBat))
                         {
                             var runnerBat = (MarketRunner<MarketRunnerBat>)((object)runner);
                             ref MarketRunnerBat marketRunner = ref runnerBat.RunnerData;
-                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack, ref marketRunner.BestAvailableToBackCount);
-                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay, ref marketRunner.BestAvailableToLayCount);
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
                         }
                         else if (typeof(T) == typeof(MarketRunnerBatTraded))
                         {
                             var runnerBat = (MarketRunner<MarketRunnerBatTraded>)((object)runner);
                             ref MarketRunnerBatTraded marketRunner = ref runnerBat.RunnerData;
-                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack, ref marketRunner.BestAvailableToBackCount);
-                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay, ref marketRunner.BestAvailableToLayCount);
-                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                         }
                         else if (typeof(T) == typeof(MarketRunnerAt))
                         {
                             var runnerBat = (MarketRunner<MarketRunnerAt>)((object)runner);
                             ref MarketRunnerAt marketRunner = ref runnerBat.RunnerData;
-                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack, ref marketRunner.AvailableToBackCount);
-                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay, ref marketRunner.AvailableToLayCount);
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
                         }
                         else if (typeof(T) == typeof(MarketRunnerAtTraded))
                         {
                             var runnerBat = (MarketRunner<MarketRunnerAtTraded>)((object)runner);
                             ref MarketRunnerAtTraded marketRunner = ref runnerBat.RunnerData;
-                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack, ref marketRunner.AvailableToBackCount);
-                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay, ref marketRunner.AvailableToLayCount);
-                            if (trdReader.TokenType != JsonTokenType.None) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                         }
                         else if (typeof(T) == typeof(MarketRunnerTraded))
                         {
                             var runnerTraded = (MarketRunner<MarketRunnerTraded>)((object)runner);
                             ref MarketRunnerTraded marketRunner = ref runnerTraded.RunnerData;
-                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                         }
                         else if (typeof(T) == typeof(MarketRunnerLastTradedPrice))
                         {
@@ -369,9 +369,9 @@ namespace BetfairStreamClient.ExchangeStream
                         {
                             var runnerBat = (MarketRunner<MarketRunnerBatTradedTVLTP>)((object)runner);
                             ref MarketRunnerBatTradedTVLTP marketRunner = ref runnerBat.RunnerData;
-                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack, ref marketRunner.BestAvailableToBackCount);
-                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay, ref marketRunner.BestAvailableToLayCount);
-                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                             if (tradedVolume > 0.0)
                                 marketRunner.TradedVolume = tradedVolume;
                             if (lastTradedPrice > 0.0)
@@ -381,8 +381,8 @@ namespace BetfairStreamClient.ExchangeStream
                         {
                             var runnerBat = (MarketRunner<MarketRunnerBatTVLTP>)((object)runner);
                             ref MarketRunnerBatTVLTP marketRunner = ref runnerBat.RunnerData;
-                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack, ref marketRunner.BestAvailableToBackCount);
-                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay, ref marketRunner.BestAvailableToLayCount);
+                            if (batbReader.TokenType != JsonTokenType.None && processBatb) StreamLevelDeltas(ref batbReader, ref marketRunner.BestAvailableToBack);
+                            if (batlReader.TokenType != JsonTokenType.None && processBatl) StreamLevelDeltas(ref batlReader, ref marketRunner.BestAvailableToLay);
                             if (tradedVolume > 0.0)
                                 marketRunner.TradedVolume = tradedVolume;
                             if (lastTradedPrice > 0.0)
@@ -392,9 +392,9 @@ namespace BetfairStreamClient.ExchangeStream
                         {
                             var runnerBat = (MarketRunner<MarketRunnerAtTradedTVLTP>)((object)runner);
                             ref MarketRunnerAtTradedTVLTP marketRunner = ref runnerBat.RunnerData;
-                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack, ref marketRunner.AvailableToBackCount);
-                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay, ref marketRunner.AvailableToLayCount);
-                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded, ref marketRunner.TradedCount);
+                            if (atbReader.TokenType != JsonTokenType.None && processAtb) StreamPriceSizeDeltas(ref atbReader, ref marketRunner.AvailableToBack);
+                            if (atlReader.TokenType != JsonTokenType.None && processAtl) StreamPriceSizeDeltas(ref atlReader, ref marketRunner.AvailableToLay);
+                            if (trdReader.TokenType != JsonTokenType.None && processTraded) StreamPriceSizeDeltas(ref trdReader, ref marketRunner.Traded);
                             if (tradedVolume > 0.0)
                                 marketRunner.TradedVolume = tradedVolume;
                             if (lastTradedPrice > 0.0)
@@ -405,33 +405,8 @@ namespace BetfairStreamClient.ExchangeStream
             }
         }
 
-        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSize[] levelDeltas, ref int count)
-        {
-            reader.Read();
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if (reader.TokenType == JsonTokenType.StartArray)
-                {
-                    //FIX THIS: when size == 0, then this needs to be **removed**, could mean all following items are empty. 
-                    //Best way to handle at moment, is iterate through, when size==0, we're done?
-                    reader.Read();
-                    int level = (int)reader.GetDouble();
-                    if (level + 1 > count)
-                        count = level + 1;
-                    reader.Read();
-                    double price = reader.GetDouble();
-                    reader.Read();
-                    double size = reader.GetDouble();
-                    if (size == 0.0)
-                    {
-                        count = level + 1;
-                    }
-                    reader.Read();
-                    levelDeltas[level] = new LevelPriceSize(level, price, size);
-                }
-            }
-        }
-        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSizeCache levelDeltas, ref int count)
+        
+        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSizeCache levelDeltas)
         {
             reader.Read();
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -449,12 +424,11 @@ namespace BetfairStreamClient.ExchangeStream
                     levelDeltas.Update(level, price, size);                    
                 }
 
-            }
-            count = levelDeltas.Count;
+            }        
         }
 
         
-        private void StreamPriceSizeDeltas(ref Utf8JsonReader reader, ref PriceSizeLadder priceSizeLadder, ref int count)
+        private void StreamPriceSizeDeltas(ref Utf8JsonReader reader, ref PriceSizeLadder priceSizeLadder)
         {
             reader.Read();
             if (reader.TokenType != JsonTokenType.StartArray) return;
@@ -471,9 +445,7 @@ namespace BetfairStreamClient.ExchangeStream
                     priceSizeLadder.Update(price, size);                    
                 }
             
-            }
-            count = priceSizeLadder.LadderCount;//keep copy, might be wastefull,as PriceSizeLadder keeps this count 
-            
+            }            
         }
 
 
@@ -572,16 +544,17 @@ namespace BetfairStreamClient.ExchangeStream
                     else if (reader.ValueTextEquals("uo"u8))
                     {
 
-                        StreamOrders(ref reader, marketId, selectionId, marketCache);
+                        StreamOrders(ref reader, marketId, selectionId,ref marketCache);
+                        
                     }
                     else if (reader.ValueTextEquals("mb"u8))
                     {
                         //Matched back
-                        StreamOrderDeltas(ref reader, marketId, selectionId, true, marketCache);
+                        StreamOrderDeltas(ref reader, marketId, selectionId, true,ref marketCache);
                     }
                     else if (reader.ValueTextEquals("ml"u8))
                     {
-                        StreamOrderDeltas(ref reader, marketId, selectionId, false, marketCache);
+                        StreamOrderDeltas(ref reader, marketId, selectionId, false,ref marketCache);
                     }
                     else
                     {
@@ -591,7 +564,7 @@ namespace BetfairStreamClient.ExchangeStream
                 }
             }
         }
-        private void StreamOrderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, bool isBack, OrderMarketCache marketCache)
+        private void StreamOrderDeltas(ref Utf8JsonReader reader, string marketId, long selectionId, bool isBack,ref OrderMarketCache marketCache)
         {
             reader.Read();
             ref OrderRunnerCache runnerCache = ref marketCache.GetOrCreateRunnerCache(marketId, selectionId);
@@ -623,10 +596,10 @@ namespace BetfairStreamClient.ExchangeStream
             return dateTimeUtc;
 
         }
-        private void StreamOrders(ref Utf8JsonReader reader, string marketId, long selectionId, OrderMarketCache marketCache)
+        private void StreamOrders(ref Utf8JsonReader reader, string marketId, long selectionId,ref OrderMarketCache marketCache)
         {
             //reader.Read();
-            var runnerCache = marketCache.GetOrCreateRunnerCache(marketId, selectionId);
+            ref OrderRunnerCache  runnerCache =  ref marketCache.GetOrCreateRunnerCache(marketId, selectionId);
             Span<byte> betIdFallbackBuffer = stackalloc byte[32];
             
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -830,8 +803,10 @@ namespace BetfairStreamClient.ExchangeStream
 
 
                     runnerCache.AddOrder(order);
+                    
                 }
             }
+            
         }
 
 

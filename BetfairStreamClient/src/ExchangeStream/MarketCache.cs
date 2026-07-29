@@ -119,17 +119,18 @@ namespace BetfairStreamClient.ExchangeStream
             return runner;
         }
 
-        private LevelPriceSize[] RentAndCopy(LevelPriceSize[] levelDeltas, out int count)
+        //private LevelPriceSize[] RentAndCopy(LevelPriceSize[] levelDeltas, out int count)
+        //{
+        //    ReadOnlySpan<LevelPriceSize> copy = levelDeltas.Length > 0 ? levelDeltas.AsSpan(0, levelDeltas.Length) : ReadOnlySpan<LevelPriceSize>.Empty;
+        //    count = levelDeltas.Length;
+        //    if (count == 0) return Array.Empty<LevelPriceSize>();
+        //    LevelPriceSize[] buffer = ArrayPool<LevelPriceSize>.Shared.Rent(count);
+        //    copy.CopyTo(buffer);
+        //    return buffer;
+        //}
+        private LevelPriceSize[] RentAndCopy(in LevelPriceSizeCache priceDeltas)
         {
-            ReadOnlySpan<LevelPriceSize> copy = levelDeltas.Length > 0 ? levelDeltas.AsSpan(0, levelDeltas.Length) : ReadOnlySpan<LevelPriceSize>.Empty;
-            count = levelDeltas.Length;
-            if (count == 0) return Array.Empty<LevelPriceSize>();
-            LevelPriceSize[] buffer = ArrayPool<LevelPriceSize>.Shared.Rent(count);
-            copy.CopyTo(buffer);
-            return buffer;
-        }
-        private LevelPriceSize[] RentAndCopy(in LevelPriceSizeCache priceDeltas, int count)
-        {
+            int count = priceDeltas.Count;
             if (count <= 0) return Array.Empty<LevelPriceSize>();
             var activeLevels = priceDeltas.ActiveLevels;
             ReadOnlySpan<LevelPriceSize> copy = activeLevels.Span;// ((ReadOnlySpan<LevelPriceSize>)priceDeltas).Slice(0, count);
@@ -139,8 +140,9 @@ namespace BetfairStreamClient.ExchangeStream
         }
 
         
-        private PriceSize[] RentAndCopy(in PriceSizeLadder priceDeltas, int count, bool descending)
+        private PriceSize[] RentAndCopy(in PriceSizeLadder priceDeltas, bool descending)
         {
+            int count = priceDeltas.LadderCount;
             if(count <= 0) return Array.Empty<PriceSize>();
             Span<PriceSize> priceSizeBuffer = stackalloc PriceSize[350];
             priceDeltas.CopyToPriceSizeSpan(priceSizeBuffer, descending);
@@ -157,9 +159,9 @@ namespace BetfairStreamClient.ExchangeStream
             if (typeof(T) == typeof(MarketRunnerBdat))
             {
                 var target = (MarketRunner<MarketRunnerBdat>)(object)runner;
-                ref MarketRunnerBdat marketRunner = ref target.RunnerData;                
-                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestDisplayAvailableToBack, MarketRunnerBdat.MaxBdatCount);                
-                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestDisplayAvailableToLay, MarketRunnerBdat.MaxBdatCount);
+                ref MarketRunnerBdat marketRunner = ref target.RunnerData;
+                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestDisplayAvailableToBack);
+                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestDisplayAvailableToLay);
 
                 MarketRunnerSnapBdat snap = new MarketRunnerSnapBdat
                 {
@@ -179,8 +181,8 @@ namespace BetfairStreamClient.ExchangeStream
             {
                 var target = (MarketRunner<MarketRunnerBat>)(object)runner;
                 ref MarketRunnerBat marketRunner = ref target.RunnerData;                
-                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestAvailableToBack, MarketRunnerBat.MaxBatCount);                
-                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestAvailableToLay, MarketRunnerBat.MaxBatCount);
+                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestAvailableToBack);                
+                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestAvailableToLay);
 
                 MarketRunnerSnapBat snap = new MarketRunnerSnapBat
                 {
@@ -200,8 +202,8 @@ namespace BetfairStreamClient.ExchangeStream
             {
                 var target = (MarketRunner<MarketRunnerBatTVLTP>)(object)runner;
                 ref MarketRunnerBatTVLTP marketRunner = ref target.RunnerData;                
-                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestAvailableToBack, MarketRunnerBat.MaxBatCount);                
-                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestAvailableToLay, MarketRunnerBat.MaxBatCount);
+                LevelPriceSize[] bdatb = RentAndCopy(in marketRunner.BestAvailableToBack);                
+                LevelPriceSize[] bdatl = RentAndCopy(in marketRunner.BestAvailableToLay);
 
                 MarketRunnerSnapBatTVLTP snap = new MarketRunnerSnapBatTVLTP
                 {
@@ -223,10 +225,10 @@ namespace BetfairStreamClient.ExchangeStream
             {
                 var target = (MarketRunner<MarketRunnerBatTradedTVLTP>)(object)runner;
                 ref MarketRunnerBatTradedTVLTP marketRunner = ref target.RunnerData;                
-                LevelPriceSize[] bdatb = RentAndCopy(marketRunner.BestAvailableToBack, marketRunner.BestAvailableToBackCount);                
-                LevelPriceSize[] bdatl = RentAndCopy(marketRunner.BestAvailableToLay, marketRunner.BestAvailableToLayCount);
+                LevelPriceSize[] bdatb = RentAndCopy(marketRunner.BestAvailableToBack);                
+                LevelPriceSize[] bdatl = RentAndCopy(marketRunner.BestAvailableToLay);
                 
-                PriceSize[] traded = RentAndCopy(marketRunner.Traded, marketRunner.TradedCount, false);
+                PriceSize[] traded = RentAndCopy(marketRunner.Traded, false);
                 MarketRunnerSnapBatTradedTVLTP snap = new MarketRunnerSnapBatTradedTVLTP
                 {
                     BestAvailableToBack = bdatb,
@@ -249,8 +251,8 @@ namespace BetfairStreamClient.ExchangeStream
             {
                 var target = (MarketRunner<MarketRunnerAt>)(object)runner;
                 ref MarketRunnerAt marketRunner = ref target.RunnerData;                
-                PriceSize[] atb = RentAndCopy(marketRunner.AvailableToBack, marketRunner.AvailableToBackCount, true);                
-                PriceSize[] atl = RentAndCopy(marketRunner.AvailableToLay, marketRunner.AvailableToLayCount, false);
+                PriceSize[] atb = RentAndCopy(marketRunner.AvailableToBack, true);                
+                PriceSize[] atl = RentAndCopy(marketRunner.AvailableToLay, false);
 
 
                 MarketRunnerSnapAt snap = new MarketRunnerSnapAt
@@ -272,9 +274,9 @@ namespace BetfairStreamClient.ExchangeStream
             {
                 var target = (MarketRunner<MarketRunnerAtTradedTVLTP>)(object)runner;
                 ref MarketRunnerAtTradedTVLTP marketRunner = ref target.RunnerData;                
-                PriceSize[] atb = RentAndCopy(marketRunner.AvailableToBack, marketRunner.AvailableToBackCount, true);                
-                PriceSize[] atl = RentAndCopy(marketRunner.AvailableToLay, marketRunner.AvailableToLayCount, false);
-                PriceSize[] traded = RentAndCopy(marketRunner.Traded, marketRunner.TradedCount, false);
+                PriceSize[] atb = RentAndCopy(marketRunner.AvailableToBack, true);                
+                PriceSize[] atl = RentAndCopy(marketRunner.AvailableToLay, false);
+                PriceSize[] traded = RentAndCopy(marketRunner.Traded, false);
 
 
                 MarketRunnerSnapAtTradedTVLTP snap = new MarketRunnerSnapAtTradedTVLTP

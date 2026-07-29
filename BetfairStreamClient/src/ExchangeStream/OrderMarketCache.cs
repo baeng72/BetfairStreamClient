@@ -37,33 +37,57 @@ namespace BetfairStreamClient.ExchangeStream
             return ref runner;
         }
 
-        private Order[] RentAndCopy(Order[] orders, out int count)
+        private Order[] RentAndCopy(Order[] orders)
         {
             ReadOnlySpan<Order> copy = orders.Length > 0 ? orders.AsSpan(0, orders.Length) : ReadOnlySpan<Order>.Empty;
-            count = orders.Length;
+            int count = orders.Length;
             if (count == 0) return Array.Empty<Order>();
             Order[] buffer = ArrayPool<Order>.Shared.Rent(count);
             copy.CopyTo(buffer);
             return buffer;
         }
-        private PriceSize[] RentAndCopy(PriceSize[] orders, out int count)
+        //private PriceSize[] RentAndCopy(PriceSize[] orders, out int count)
+        //{
+        //    ReadOnlySpan<PriceSize> copy = orders.Length > 0 ? orders.AsSpan(0, orders.Length) : ReadOnlySpan<PriceSize>.Empty;
+        //    count = orders.Length;
+        //    if (count == 0) return Array.Empty<PriceSize>();
+        //    PriceSize[] buffer = ArrayPool<PriceSize>.Shared.Rent(count);
+        //    copy.CopyTo(buffer);
+        //    return buffer;
+        //}
+        private LevelPriceSize[] RentAndCopy(in LevelPriceSizeCache priceDeltas)
         {
-            ReadOnlySpan<PriceSize> copy = orders.Length > 0 ? orders.AsSpan(0, orders.Length) : ReadOnlySpan<PriceSize>.Empty;
-            count = orders.Length;
-            if (count == 0) return Array.Empty<PriceSize>();
-            PriceSize[] buffer = ArrayPool<PriceSize>.Shared.Rent(count);
+            int count = priceDeltas.Count;
+            if (count <= 0) return Array.Empty<LevelPriceSize>();
+            var activeLevels = priceDeltas.ActiveLevels;
+            ReadOnlySpan<LevelPriceSize> copy = activeLevels.Span;// ((ReadOnlySpan<LevelPriceSize>)priceDeltas).Slice(0, count);
+            LevelPriceSize[] buffer = ArrayPool<LevelPriceSize>.Shared.Rent(activeLevels.Length);
             copy.CopyTo(buffer);
+            return buffer;
+        }
+
+
+        private PriceSize[] RentAndCopy(in PriceSizeLadder priceDeltas, bool descending)
+        {
+            int count = priceDeltas.LadderCount;
+            if (count <= 0) return Array.Empty<PriceSize>();
+            Span<PriceSize> priceSizeBuffer = stackalloc PriceSize[350];
+            priceDeltas.CopyToPriceSizeSpan(priceSizeBuffer, descending);
+            Span<PriceSize> activeMarketPairs = priceSizeBuffer.Slice(0, count);
+
+            PriceSize[] buffer = ArrayPool<PriceSize>.Shared.Rent(count);
+            activeMarketPairs.CopyTo(buffer);
             return buffer;
         }
         public OrderRunnerSnap ExtractPooledSnapshot(long selectionId)
         {
             OrderRunnerCache runner = _runners[selectionId];
-            int orderCount = 0;
-            var orders = RentAndCopy(runner.UnmatchedOrders, out orderCount);
-            int matchedBacksCount = 0;
-            var matchedBacks = RentAndCopy(runner.MatchedBacks, out matchedBacksCount);
-            int matchedLaysCount = 0;
-            var matchedLays = RentAndCopy(runner.MatchedLays, out matchedLaysCount);
+            
+            var orders = RentAndCopy(runner.UnmatchedOrders);
+            
+            var matchedBacks = RentAndCopy(runner.MatchedBacks,true);
+            
+            var matchedLays = RentAndCopy(runner.MatchedLays, false);
             return new OrderRunnerSnap{
                 SelectionId=selectionId,
                 UnmatchedOrders = orders,

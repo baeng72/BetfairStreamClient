@@ -210,6 +210,13 @@ namespace BetfairStreamClient.ExchangeStream
             // 100.0 to 1000.0 (Indices 259 to 349) - Step 10.0
             return Math.Round(100.0 + (index - 259) * 10.0, 1);
         }
+
+        public void Clear()
+        {
+            Span<int> lookupSpan = _indexLookup;
+            lookupSpan.Fill(-1);
+            _activeCount = 0;
+        }
     }
 
 }
