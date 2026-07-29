@@ -9,16 +9,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 
 namespace BetfairStreamClient.ExchangeStream
-{
-    
-
-    
-
-    [InlineArray(10)]
-    public struct LevelDeltaBuffer10
-    {
-        private LevelDelta _element0;
-    }
+{    
     public interface IClearable
     {
         void Clear();
@@ -39,9 +30,9 @@ namespace BetfairStreamClient.ExchangeStream
     {
         public const int MaxBdatCount = 10;
 
-        public LevelDeltaBuffer10 BestDisplayAvailableToBack;
+        public LevelPriceSizeCache BestDisplayAvailableToBack;
         public int BestDisplayAvailableToBackCount = 0;
-        public LevelDeltaBuffer10 BestDisplayAvailableToLay;
+        public LevelPriceSizeCache BestDisplayAvailableToLay;
         public int BestDisplayAvailableToLayCount = 0;
         public MarketRunnerBdat()
         {
@@ -56,9 +47,9 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketRunnerBat : IClearable, IDisposable
     {
         public const int MaxBatCount = 10;        
-        public LevelDeltaBuffer10 BestAvailableToBack;
+        public LevelPriceSizeCache BestAvailableToBack;
         public int BestAvailableToBackCount = 0;
-        public LevelDeltaBuffer10 BestAvailableToLay;
+        public LevelPriceSizeCache BestAvailableToLay;
         public int BestAvailableToLayCount = 0;
         public MarketRunnerBat()
         {
@@ -187,9 +178,9 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketRunnerBatTraded : IClearable, IDisposable
     {
         public const int MaxBatCount = 10;        
-        public LevelDeltaBuffer10 BestAvailableToBack;
+        public LevelPriceSizeCache BestAvailableToBack;
         public int BestAvailableToBackCount;
-        public LevelDeltaBuffer10 BestAvailableToLay;
+        public LevelPriceSizeCache BestAvailableToLay;
         public int BestAvailableToLayCount;
         public const int MaxTradedCount = 20;
         public PriceSizeLadder Traded;
@@ -209,9 +200,9 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketRunnerBdatTraded : IClearable, IDisposable
     {
         public const int MaxBdatCount = 10;
-        public LevelDeltaBuffer10 BestDisplayAvailableToBack;
+        public LevelPriceSizeCache BestDisplayAvailableToBack;
         public int BestDisplayAvailableToBackCount;
-        public LevelDeltaBuffer10 BestDisplayAvailableToLay;
+        public LevelPriceSizeCache BestDisplayAvailableToLay;
         public int BestDisplayAvailableToLayCount;
         public const int MaxTradedCount = 20;
         public PriceSizeLadder Traded;
@@ -232,9 +223,9 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketRunnerBatTVLTP : IClearable, IDisposable
     {
         public const int MaxBatCount = 10;        
-        public LevelDeltaBuffer10 BestAvailableToBack;
+        public LevelPriceSizeCache BestAvailableToBack;
         public int BestAvailableToBackCount;
-        public LevelDeltaBuffer10 BestAvailableToLay;
+        public LevelPriceSizeCache BestAvailableToLay;
         public int BestAvailableToLayCount;
         public double LastTradedPrice = 0.0;
         public double TradedVolume = 0.0;
@@ -255,9 +246,9 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketRunnerBatTradedTVLTP : IClearable, IDisposable
     {
         public const int MaxBatCount = 10;        
-        public LevelDeltaBuffer10 BestAvailableToBack;
+        public LevelPriceSizeCache BestAvailableToBack;
         public int BestAvailableToBackCount;
-        public LevelDeltaBuffer10 BestAvailableToLay;
+        public LevelPriceSizeCache BestAvailableToLay;
         public int BestAvailableToLayCount;
         public const int MaxTradedCount = 20;
         public PriceSizeLadder Traded;

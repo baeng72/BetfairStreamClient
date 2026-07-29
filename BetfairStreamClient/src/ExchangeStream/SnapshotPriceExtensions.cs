@@ -19,7 +19,7 @@ namespace BetfairStreamClient.ExchangeStream
             return null;
         }
 
-        public static LevelDelta? FindBestPrice(LevelDelta[] rentedLadder, int activeCount)
+        public static LevelPriceSize? FindBestPrice(LevelPriceSize[] rentedLadder, int activeCount)
         {
             //If the cache reported no active levels, it's completly empty.
             if (activeCount == 0 || rentedLadder == null) return null;

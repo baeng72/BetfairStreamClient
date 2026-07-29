@@ -108,9 +108,11 @@ namespace StreamClientConsole{
                 
                 string marketId = notification.MarketId;
                 DateTime scheduledOff = DateTime.MinValue;
-                if (notification.MarketDefinition != null)
+                if(notification.MarketSnap.MarketDefinition!=null)
+                //if (notification.MarketDefinition != null)
                 {
-                    scheduledOff = notification.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
+                    //scheduledOff =  notification.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
+                    scheduledOff = notification.MarketSnap.MarketDefinition.MarketTime ?? DateTime.UtcNow.AddHours(1);
                 }
                 var trackers = _markets.GetOrAdd(marketId, _ => new ConcurrentDictionary<long, RunnerTracker>());
                 var cat = _marketCatalogues.FirstOrDefault(x=>x.MarketId==notification.MarketId);

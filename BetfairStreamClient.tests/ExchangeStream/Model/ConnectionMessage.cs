@@ -23,7 +23,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
         public ConnectionMessage(string Op = null, int? Id = null, string ConnectionId = null)
         {
             this.Op = Op;
-            this.Id = Id;
+            this.Id = Id!=null?Id.Value:0;
             this.ConnectionId = ConnectionId;
         }
 

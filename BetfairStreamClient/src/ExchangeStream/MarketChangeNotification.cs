@@ -11,7 +11,7 @@ namespace BetfairStreamClient.ExchangeStream
     public struct MarketChangeNotification<T> : IDisposable, IClearable where T : struct, IDisposable, IClearable
     {
         public string MarketId { get; init; }
-        public MarketDefinition? MarketDefinition { get; init; }
+        //public MarketDefinition? MarketDefinition { get; init; }
 
         public MarketSnap<T> MarketSnap { get; init; }
 

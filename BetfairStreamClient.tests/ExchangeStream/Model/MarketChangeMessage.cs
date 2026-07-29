@@ -94,7 +94,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
             SegmentTypeEnum? SegmentType = null)
         {
             this.Op = Op;
-            this.Id = Id;
+            this.Id = Id!=null?Id.Value:0;
             this.Ct = Ct;
             this.Clk = Clk;
             this.HeartbeatMs = HeartbeatMs;

@@ -38,9 +38,9 @@ namespace BetfairStreamClient.ExchangeStream
             var notification = new MarketChangeNotification<TSnap>
             {
                 MarketId = marketId,
-                MarketDefinition = definition,
+                //MarketDefinition = definition,
                 Timestamp = timeStamp,
-                MarketSnap = new MarketSnap<TSnap> { RunnerPrices = pooledRunners, RunnerCount = totalRunners},                
+                MarketSnap = new MarketSnap<TSnap> { RunnerPrices = pooledRunners, RunnerCount = totalRunners, MarketDefinition = definition},                
             };
 
             // Clean, allocation-free execution without boxing/casting tricks

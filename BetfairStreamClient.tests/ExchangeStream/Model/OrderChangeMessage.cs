@@ -83,7 +83,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
         /// </param>
         public OrderChangeMessage(
             string Op = null,
-            int? Id = null,
+            int Id=0,// = null,
             CtEnum? Ct = null,
             string Clk = null,
             long? HeartbeatMs = null,

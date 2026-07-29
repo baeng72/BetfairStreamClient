@@ -104,7 +104,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
         /// <param name="StatusCode">The status of the last request.</param>
         public StatusMessage(
             string Op = null,
-            int? Id = null,
+            int Id = 0,// = null,
             string ErrorMessage = null,
             ErrorCodeEnum? ErrorCode = null,
             string ConnectionId = null,

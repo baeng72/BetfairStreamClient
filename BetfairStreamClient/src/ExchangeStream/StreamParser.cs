@@ -196,7 +196,7 @@ namespace BetfairStreamClient.ExchangeStream
                     {
                         if (reader.TokenType == JsonTokenType.PropertyName)
                         {
-                            //string propertyName = reader.GetString();
+                            string propertyName = reader.GetString();
 
                             if (reader.ValueTextEquals("id"u8))
                             {
@@ -405,7 +405,7 @@ namespace BetfairStreamClient.ExchangeStream
             }
         }
 
-        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelDelta[] levelDeltas, ref int count)
+        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSize[] levelDeltas, ref int count)
         {
             reader.Read();
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -427,35 +427,30 @@ namespace BetfairStreamClient.ExchangeStream
                         count = level + 1;
                     }
                     reader.Read();
-                    levelDeltas[level] = new LevelDelta(level, price, size);
+                    levelDeltas[level] = new LevelPriceSize(level, price, size);
                 }
             }
         }
-        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelDeltaBuffer10 levelDeltas, ref int count)
+        private void StreamLevelDeltas(ref Utf8JsonReader reader, ref LevelPriceSizeCache levelDeltas, ref int count)
         {
             reader.Read();
             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
             {
                 if (reader.TokenType == JsonTokenType.StartArray)
                 {
-                    //FIX THIS: when size == 0, then this needs to be **removed**, could mean all following items are empty. 
-                    //Best way to handle at moment, is iterate through, when size==0, we're done?
                     reader.Read();
                     int level = (int)reader.GetDouble();
-                    if (level + 1 > count)
-                        count = level + 1;
                     reader.Read();
                     double price = reader.GetDouble();
                     reader.Read();
                     double size = reader.GetDouble();
-                    if (size == 0.0)
-                    {
-                        count = level + 1;
-                    }
+                    
                     reader.Read();
-                    levelDeltas[level] = new LevelDelta(level, price, size);
+                    levelDeltas.Update(level, price, size);                    
                 }
+
             }
+            count = levelDeltas.Count;
         }
 
         

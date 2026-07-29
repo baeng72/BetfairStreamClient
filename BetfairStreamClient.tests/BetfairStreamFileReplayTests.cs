@@ -14,17 +14,18 @@ namespace BetfairStreamClient.tests
 {
     public class BetfairStreamFileReplayTests
     {
-        
-        
+
+
         [Fact]
         public async Task RunLoopAsync_WithRecordedFile_PopulatesCachesCorrectly()
         {
             // 1. Arrange: System components
-            var marketCache = new MarketCacheManager<MarketRunnerAtTradedTVLTP, MarketRunnerSnapAtTradedTVLTP>();
+            //var marketCache = new MarketCacheManager<MarketRunnerAtTradedTVLTP, MarketRunnerSnapAtTradedTVLTP>();
+            var marketCache = new MarketCacheManager<MarketRunnerBatTradedTVLTP, MarketRunnerSnapBatTradedTVLTP>();
             var orderCache = new OrderCacheManager();
             var logger = new Logger();
             var streamDumper = new RawStreamDumper();
-            var streamParser = new StreamParser<MarketRunnerAtTradedTVLTP, MarketRunnerSnapAtTradedTVLTP>(marketCache, orderCache, logger);
+            var streamParser = new StreamParser<MarketRunnerBatTradedTVLTP, MarketRunnerSnapBatTradedTVLTP>(marketCache, orderCache, logger);
 
             // 2. Setup the Two-Way Test Stream
             var networkInputPipe = new Pipe(); // We write file data here; client reads from here
@@ -35,7 +36,8 @@ namespace BetfairStreamClient.tests
             var mockTransport = new Mock<ITransportConnection>();
             mockTransport.Setup(t => t.GetStream()).Returns(duplexStream); // Return the two-way stream!
 
-            var client = new StreamClient<MarketRunnerAtTradedTVLTP, MarketRunnerSnapAtTradedTVLTP>(
+            //var client = new StreamClient<MarketRunnerAtTradedTVLTP, MarketRunnerSnapAtTradedTVLTP>(
+            var client = new StreamClient<MarketRunnerBatTradedTVLTP, MarketRunnerSnapBatTradedTVLTP>(
                 host: "://betfair.com", port: 443,
                 appKey: "TEST_APP_KEY", sessionToken: "TEST_SESSION",
                 logger, streamDumper,
@@ -51,10 +53,11 @@ namespace BetfairStreamClient.tests
             await client.ConnectAndAuthenticateAsync(cts.Token);
             Task runLoopTask = client.RunLoopAsync(cts.Token);
 
-            
+
 
             // 4. Replay: Stream file data into the networkInputPipe
-            string filePath = "1_258926623.json";// Path.Combine("C:\\DATA\\BF\\BFRaceBot", "raw_stream-2026-07-22 02-48-22.json");
+            //string filePath = "1_258926623.json";// Path.Combine("C:\\DATA\\BF\\BFRaceBot", "raw_stream-2026-07-22 02-48-22.json");
+            string filePath = "raw_stream-2026-07-20.json.txt";
 
             //Setup ESA example RequestResponse processor to do comparison
             var requestResponseProcessor = new RequestResponseProcessor(new Action<string>(s => { Console.WriteLine(s); }));
@@ -78,73 +81,90 @@ namespace BetfairStreamClient.tests
                     await networkInputPipe.Writer.FlushAsync();
                     //feed line into request response processor
                     requestResponseProcessor.ReceiveLine(line);
-                    
-                    await Task.Delay(10);
-                    var snap = clientCache.MarketCache.Markets.FirstOrDefault(x => x.MarketId == "1.258926623").Snap;
-                    var newSnap = marketCache.GetMarketSnap("1.258926623");
-                    if (snap.MarketRunners.Count == newSnap.RunnerCount)
+
+                    await Task.Delay(100);
+                    if (lineCount > 5)
                     {
-                        for (int i = 0; i < snap.MarketRunners.Count; i++)
+                        if (clientCache.MarketCache.Count > 0)
                         {
-                            var oldPrices = snap.MarketRunners[i].Prices;
-                            var newPrices = newSnap.RunnerPrices[i].RunnerData;
-                            int backCount = 0;
-                            if (oldPrices.AvailableToBack.Count == newPrices.AvailableToBackCount)
+                            var snap = clientCache.MarketCache.Markets.FirstOrDefault(x => x.MarketId == "1.260137374").Snap;
+                            var activeRunners = new List<ExchangeStream.Cache.MarketRunnerSnap>();
+                            foreach(var runner in snap.MarketRunners)
                             {
-
-                                for (int c = 0; c < oldPrices.AvailableToBack.Count; c++)
+                                if(runner.Definition.Status == ExchangeStream.Model.RunnerDefinition.StatusEnum.Active)
                                 {
-                                    var oldPrice = oldPrices.AvailableToBack[c];
-                                    var newPrice = newPrices.AvailableToBack[c];
-                                    if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
-                                    {
-                                        backCount++;
-                                    }
-                                    else
-                                    {
-                                        int x = 0;
-                                    }
+                                    activeRunners.Add(runner);
                                 }
                             }
-                            Assert.Equal(backCount, oldPrices.AvailableToBack.Count);
-                            int layCount = 0;
-                            if (oldPrices.AvailableToLay.Count == newPrices.AvailableToLayCount)
+                            
+                            //var newSnap = marketCache.GetMarketSnap("1.258926623");
+                            var newSnap = marketCache.GetMarketSnap("1.260137374");
+                            if (activeRunners.Count == newSnap.RunnerCount)
                             {
-
-                                for (int c = 0; c < oldPrices.AvailableToLay.Count; c++)
+                                for (int i = 0; i < activeRunners.Count; i++)
                                 {
-                                    var oldPrice = oldPrices.AvailableToLay[c];
-                                    var newPrice = newPrices.AvailableToLay[c];
-                                    if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+                                    var oldPrices = activeRunners[i].Prices;
+                                    var selSnap = newSnap.RunnerPrices.Where(x => x.SelectionId == activeRunners[i].RunnerId.SelectionId).ToList();
+                                    var newPrices = selSnap[0].RunnerData;
+                                    int backCount = 0;
+                                    if (oldPrices.AvailableToBack.Count == newPrices.BestAvailableToBackCount)
                                     {
-                                        layCount++;
+
+                                        for (int c = 0; c < oldPrices.BestAvailableToBack.Count; c++)
+                                        {
+                                            var oldPrice = oldPrices.BestAvailableToBack[c];
+                                            var newPrice = newPrices.BestAvailableToBack[c];
+                                            if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+                                            {
+                                                backCount++;
+                                            }
+                                            else
+                                            {
+                                                int x = 0;
+                                            }
+                                        }
                                     }
-                                    else
+                                    Assert.Equal(backCount, oldPrices.AvailableToBack.Count);
+                                    int layCount = 0;
+                                    if (oldPrices.AvailableToLay.Count == newPrices.BestAvailableToLayCount)
                                     {
-                                        int x = 0;
+
+                                        for (int c = 0; c < oldPrices.AvailableToLay.Count; c++)
+                                        {
+                                            var oldPrice = oldPrices.BestAvailableToLay[c];
+                                            var newPrice = newPrices.BestAvailableToLay[c];
+                                            if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+                                            {
+                                                layCount++;
+                                            }
+                                            else
+                                            {
+                                                int x = 0;
+                                            }
+                                        }
                                     }
+                                    Assert.Equal(layCount, oldPrices.AvailableToLay.Count);
+                                    int tradedCount = 0;
+                                    if (oldPrices.Traded.Count == newPrices.TradedCount)
+                                    {
+
+                                        for (int c = 0; c < oldPrices.Traded.Count; c++)
+                                        {
+                                            var oldPrice = oldPrices.Traded[c];
+                                            var newPrice = newPrices.Traded[c];
+                                            if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+                                            {
+                                                tradedCount++;
+                                            }
+                                            else
+                                            {
+                                                int x = 0;
+                                            }
+                                        }
+                                    }
+                                    Assert.Equal(tradedCount, oldPrices.Traded.Count);
                                 }
                             }
-                            Assert.Equal(layCount, oldPrices.AvailableToLay.Count);
-                            int tradedCount = 0;
-                            if (oldPrices.Traded.Count == newPrices.TradedCount)
-                            {
-
-                                for (int c = 0; c < oldPrices.Traded.Count; c++)
-                                {
-                                    var oldPrice = oldPrices.Traded[c];
-                                    var newPrice = newPrices.Traded[c];
-                                    if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
-                                    {
-                                        tradedCount++;
-                                    }
-                                    else
-                                    {
-                                        int x = 0;
-                                    }
-                                }
-                            }
-                            Assert.Equal(tradedCount, oldPrices.Traded.Count);
                         }
                     }
                     lineCount++;
@@ -164,7 +184,76 @@ namespace BetfairStreamClient.tests
             var targetOrder = orderCache.GetOrderMarketSnap("1.258926623");
 
             Assert.NotNull(targetMarket);
+            ////var snap = clientCache.MarketCache.Markets.FirstOrDefault(x => x.MarketId == "1.258926623").Snap;
+            //var snap = clientCache.MarketCache.Markets.FirstOrDefault(x => x.MarketId == "1.260137374").Snap;
             
+            ////var newSnap = marketCache.GetMarketSnap("1.258926623");
+            //var newSnap = marketCache.GetMarketSnap("1.260137374");
+            //if (snap.MarketRunners.Count == newSnap.RunnerCount)
+            //{
+            //    for (int i = 0; i < snap.MarketRunners.Count; i++)
+            //    {
+            //        var oldPrices = snap.MarketRunners[i].Prices;
+            //        var newPrices = newSnap.RunnerPrices[i].RunnerData;
+            //        int backCount = 0;
+            //        if (oldPrices.AvailableToBack.Count == newPrices.BestAvailableToBackCount)
+            //        {
+
+            //            for (int c = 0; c < oldPrices.BestAvailableToBack.Count; c++)
+            //            {
+            //                var oldPrice = oldPrices.BestAvailableToBack[c];
+            //                var newPrice = newPrices.BestAvailableToBack[c];
+            //                if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+            //                {
+            //                    backCount++;
+            //                }
+            //                else
+            //                {
+            //                    int x = 0;
+            //                }
+            //            }
+            //        }
+            //        Assert.Equal(backCount, oldPrices.AvailableToBack.Count);
+            //        int layCount = 0;
+            //        if (oldPrices.AvailableToLay.Count == newPrices.BestAvailableToLayCount)
+            //        {
+
+            //            for (int c = 0; c < oldPrices.AvailableToLay.Count; c++)
+            //            {
+            //                var oldPrice = oldPrices.BestAvailableToLay[c];
+            //                var newPrice = newPrices.BestAvailableToLay[c];
+            //                if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+            //                {
+            //                    layCount++;
+            //                }
+            //                else
+            //                {
+            //                    int x = 0;
+            //                }
+            //            }
+            //        }
+            //        Assert.Equal(layCount, oldPrices.AvailableToLay.Count);
+            //        int tradedCount = 0;
+            //        if (oldPrices.Traded.Count == newPrices.TradedCount)
+            //        {
+
+            //            for (int c = 0; c < oldPrices.Traded.Count; c++)
+            //            {
+            //                var oldPrice = oldPrices.Traded[c];
+            //                var newPrice = newPrices.Traded[c];
+            //                if (oldPrice.Price == newPrice.Price && oldPrice.Size == newPrice.Size)
+            //                {
+            //                    tradedCount++;
+            //                }
+            //                else
+            //                {
+            //                    int x = 0;
+            //                }
+            //            }
+            //        }
+            //        Assert.Equal(tradedCount, oldPrices.Traded.Count);
+            //    }
+            //}
         }
     }
 

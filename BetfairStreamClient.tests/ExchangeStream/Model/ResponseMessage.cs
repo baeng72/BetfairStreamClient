@@ -22,7 +22,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
         public ResponseMessage(string Op = null, int? Id = null)
         {
             this.Op = Op;
-            this.Id = Id;
+            this.Id = Id != null ? Id.Value : 0;// Id;
         }
 
 
@@ -38,7 +38,7 @@ namespace BetfairStreamClient.tests.ExchangeStream.Model
         /// </summary>
         /// <value>Client generated unique id to link request with response (like json rpc)</value>
         [DataMember(Name = "id", EmitDefaultValue = false)]
-        public int? Id { get; set; }
+        public int Id { get; set; }
 
         /// <summary>
         ///     Returns the string presentation of the object

@@ -9,6 +9,7 @@ namespace BetfairStreamClient.ExchangeStream
 {
     public struct MarketSnap<T> : IDisposable, IClearable where T : struct, IDisposable, IClearable
     {
+        public MarketDefinition MarketDefinition { get; set; }
         public MarketRunnerSnap<T>[] RunnerPrices { get; init; }
 
         public int RunnerCount { get; init; }
