@@ -144,7 +144,8 @@ namespace BetfairStreamClient.ExchangeStream
                         {
                             marketCache.Clear();
                         }
-
+                        if(totalVolume>marketCache.TradedVolume)
+                            marketCache.TradedVolume = totalVolume;
                         //    // 2. Process runner changes using the deferred reader window
                         if (hasPriceChanges && deferredRunnerReader.TokenType != JsonTokenType.None)
                         {

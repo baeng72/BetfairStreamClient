@@ -40,6 +40,7 @@ namespace BetfairStreamClient.ExchangeStream
                 MarketId = marketId,
                 //MarketDefinition = definition,
                 Timestamp = timeStamp,
+                TradedVolume = marketCache.TradedVolume,
                 MarketSnap = new MarketSnap<TSnap> { RunnerPrices = pooledRunners, RunnerCount = totalRunners, MarketDefinition = definition},                
             };
 

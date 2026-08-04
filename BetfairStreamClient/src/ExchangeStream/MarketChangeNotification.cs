@@ -15,6 +15,8 @@ namespace BetfairStreamClient.ExchangeStream
 
         public MarketSnap<T> MarketSnap { get; init; }
 
+        public double TradedVolume { get; init; }
+
         public DateTime Timestamp { get; init; }
 
         public void Dispose()

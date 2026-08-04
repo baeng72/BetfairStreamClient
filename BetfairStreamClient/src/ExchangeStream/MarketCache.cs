@@ -14,6 +14,8 @@ namespace BetfairStreamClient.ExchangeStream
         public string MarketId { get; set; }
         private Dictionary<long, MarketRunner<T>> _runners = new Dictionary<long, MarketRunner<T>>();
         public Dictionary<long, MarketRunner<T>> Runners { get { return _runners; } }
+
+        public double TradedVolume { get; set; }
         public int RunnerCount { get { return _runners.Count; } }
         public MarketCache(string marketId)
         {
@@ -32,78 +34,88 @@ namespace BetfairStreamClient.ExchangeStream
         {
             if (_runners.TryGetValue(selectionId, out var runner)) return runner;
             runner = new MarketRunner<T>();
-            //if (typeof(T) == typeof(MarketRunnerBdat))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBdat>)(object)runner;
-            //    ref MarketRunnerBdat marketRunner = ref target.RunnerData;
+            if (typeof(T) == typeof(MarketRunnerBdat))
+            {
+                var target = (MarketRunner<MarketRunnerBdat>)(object)runner;
+                ref MarketRunnerBdat marketRunner = ref target.RunnerData;
             //    marketRunner.BestDisplayAvailableToBack = new LevelDelta[MarketRunnerBdat.MaxBdatCount];
             //    marketRunner.BestDisplayAvailableToLay = new LevelDelta[MarketRunnerBdat.MaxBdatCount];
             //    target.RunnerData = marketRunner;
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerBat))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBat>)(object)runner;
-            //    ref MarketRunnerBat marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerBat))
+            {
+                var target = (MarketRunner<MarketRunnerBat>)(object)runner;
+                ref MarketRunnerBat marketRunner = ref target.RunnerData;
             //    marketRunner.BestAvailableToBack = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.BestAvailableToLay = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    target.RunnerData = marketRunner;
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerAt))
-            //{
-            //    var target = (MarketRunner<MarketRunnerAt>)(object)runner;
-            //    ref MarketRunnerAt marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerAt))
+            {
+                var target = (MarketRunner<MarketRunnerAt>)(object)runner;
+                ref MarketRunnerAt marketRunner = ref target.RunnerData;
+                marketRunner.AvailableToBack.Initialize();
+                marketRunner.AvailableToLay.Initialize();
+                
             //    marketRunner.AvailableToBack = new PriceSizeDelta[MarketRunnerAt.MaxAtCount];
             //    marketRunner.AvailableToLay = new PriceSizeDelta[MarketRunnerAt.MaxAtCount];
             //    target.RunnerData = marketRunner;
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerTraded))
-            //{
-            //    var target = (MarketRunner<MarketRunnerTraded>)(object)runner;
-            //    ref MarketRunnerTraded marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerTraded))
+            {
+                var target = (MarketRunner<MarketRunnerTraded>)(object)runner;
+                ref MarketRunnerTraded marketRunner = ref target.RunnerData;
+                marketRunner.Traded.Initialize();
             //    marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];
             //    target.RunnerData = marketRunner;
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerBdatTraded))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBdatTraded>)(object)runner;
-            //    ref MarketRunnerBdatTraded marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerBdatTraded))
+            {
+                var target = (MarketRunner<MarketRunnerBdatTraded>)(object)runner;
+                ref MarketRunnerBdatTraded marketRunner = ref target.RunnerData;
+                marketRunner.Traded.Initialize();
             //    marketRunner.BestDisplayAvailableToBack = new LevelDelta[MarketRunnerBdat.MaxBdatCount];
             //    marketRunner.BestDisplayAvailableToLay = new LevelDelta[MarketRunnerBdat.MaxBdatCount];
             //    marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];                
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerBatTraded))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBatTraded>)(object)runner;
-            //    ref MarketRunnerBatTraded marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerBatTraded))
+            {
+                var target = (MarketRunner<MarketRunnerBatTraded>)(object)runner;
+                ref MarketRunnerBatTraded marketRunner = ref target.RunnerData;
+                marketRunner.Traded.Initialize();
             //    marketRunner.BestAvailableToBack = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.BestAvailableToLay = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];                
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerAtTraded))
-            //{
-            //    var target = (MarketRunner<MarketRunnerAtTraded>)(object)runner;
-            //    ref MarketRunnerAtTraded marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerAtTraded))
+            {
+                var target = (MarketRunner<MarketRunnerAtTraded>)(object)runner;
+
+                ref MarketRunnerAtTraded marketRunner = ref target.RunnerData;
+                marketRunner.AvailableToBack.Initialize();
+                marketRunner.AvailableToLay.Initialize();
+                marketRunner.Traded.Initialize();
             //    marketRunner.AvailableToBack = new PriceSizeDelta[MarketRunnerAt.MaxAtCount];
             //    marketRunner.AvailableToLay = new PriceSizeDelta[MarketRunnerAt.MaxAtCount];
-            //    marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];                
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerBatTradedTVLTP))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBatTradedTVLTP>)(object)runner;
-            //    ref MarketRunnerBatTradedTVLTP marketRunner = ref target.RunnerData;
+                //marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];                
+            }
+            else if (typeof(T) == typeof(MarketRunnerBatTradedTVLTP))
+            {
+                var target = (MarketRunner<MarketRunnerBatTradedTVLTP>)(object)runner;
+                ref MarketRunnerBatTradedTVLTP marketRunner = ref target.RunnerData;
+                marketRunner.Traded.Initialize();
             //    marketRunner.BestAvailableToBack = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.BestAvailableToLay = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.Traded = new PriceSizeDelta[MarketRunnerTraded.MaxTradedCount];                
-            //}
-            //else if (typeof(T) == typeof(MarketRunnerBatTVLTP))
-            //{
-            //    var target = (MarketRunner<MarketRunnerBatTVLTP>)(object)runner;
-            //    ref MarketRunnerBatTVLTP marketRunner = ref target.RunnerData;
+            }
+            else if (typeof(T) == typeof(MarketRunnerBatTVLTP))
+            {
+                var target = (MarketRunner<MarketRunnerBatTVLTP>)(object)runner;
+                ref MarketRunnerBatTVLTP marketRunner = ref target.RunnerData;
             //    marketRunner.BestAvailableToBack = new LevelDelta[MarketRunnerBat.MaxBatCount];
             //    marketRunner.BestAvailableToLay = new LevelDelta[MarketRunnerBat.MaxBatCount];                
-            //}
-            //else
-            if (typeof(T) == typeof(MarketRunnerAtTradedTVLTP))
+            }
+            else if (typeof(T) == typeof(MarketRunnerAtTradedTVLTP))
             {
                   var target = (MarketRunner<MarketRunnerAtTradedTVLTP>)(object)runner;
                 
